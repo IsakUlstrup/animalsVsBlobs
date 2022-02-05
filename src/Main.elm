@@ -6,7 +6,8 @@ import Component exposing (Component, getCharacter)
 import Components.Character
 import Ecs
 import GameData exposing (GameScene)
-import Html exposing (Html, button, div, h3, p)
+import Html exposing (Html, button, div, h3, input, p)
+import Html.Attributes
 import Html.Events
 import Svg exposing (Svg, g, svg, text, text_)
 import Svg.Attributes exposing (class, id, viewBox)
@@ -23,6 +24,7 @@ type alias Model =
     { scene : GameScene
     , timeAccum : Float
     , tickTime : Float
+    , speedModifier : Float
     }
 
 
@@ -30,25 +32,26 @@ init : ( Model, Cmd Msg )
 init =
     ( Model
         (Ecs.emptyScene 10
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newPlayerCharacter ( 0, 0 ) ( 0, 0 ) 4 0.009) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newPlayerCharacter ( 10, 5 ) ( 0, 0 ) 4 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newPlayerCharacter ( -5, 2 ) ( 0, 0 ) 4 0.01) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newPlayerCharacter ( 2, 40 ) ( 0, 0 ) 4 0.006) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 40, -20 ) ( 0, 0 ) 2) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 40, 40 ) ( 0, 0 ) 3) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -40, -40 ) ( 0, 0 ) 2) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -30, -44 ) ( 0, 0 ) 1) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -25, 30 ) ( 0, 0 ) 2) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -15, 30 ) ( 0, 0 ) 5) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -45, 30 ) ( 0, 0 ) 2) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -45, 40 ) ( 0, 0 ) 3) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 45, -40 ) ( 0, 0 ) 1) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 0, 0 ) True 4 0.009) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 10, 5 ) True 4 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -5, 2 ) True 4 0.01) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 2, 40 ) True 4 0.006) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 40, -20 ) False 2 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 40, 40 ) False 3 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -40, -40 ) False 2 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -30, -44 ) False 1 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -25, 30 ) False 2 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -15, 30 ) False 5 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -45, 30 ) False 2 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -45, 40 ) False 3 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 45, -40 ) False 1 0.007) ]
             |> Ecs.addSystem movementSystem
             |> Ecs.addSystem aiSystem
             |> Ecs.addSystem deathSystem
         )
         0
-        16
+        30
+        1
     , Cmd.none
     )
 
@@ -60,29 +63,26 @@ init =
 type Msg
     = Tick Float
     | Reset
+    | SetSpeedModifier Float
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick dt ->
-            let
-                newTimeAccum =
-                    dt + model.timeAccum
-            in
-            if newTimeAccum >= model.tickTime then
-                ( { model
-                    | scene = model.scene |> Ecs.runSystems (GameData.GameTick model.tickTime)
-                    , timeAccum = 0
-                  }
-                , Cmd.none
-                )
-
-            else
-                ( { model | timeAccum = newTimeAccum }, Cmd.none )
+            ( { model
+                | scene =
+                    model.scene
+                        |> Ecs.runSystems (GameData.GameTick (dt * model.speedModifier))
+              }
+            , Cmd.none
+            )
 
         Reset ->
             init
+
+        SetSpeedModifier speed ->
+            ( { model | speedModifier = speed }, Cmd.none )
 
 
 
@@ -181,8 +181,17 @@ view model =
     div [ id "app" ]
         [ div [ class "game-ui" ]
             [ h3 [] [ text "Game UI" ]
-            , p [] [ text "Lorem ipsum etc" ]
             , button [ Html.Events.onClick Reset ] [ text "reset game" ]
+            , p [] [ text "game speed: ", text (String.fromFloat model.speedModifier) ]
+            , input
+                [ Html.Attributes.max "5"
+                , Html.Attributes.min "0"
+                , Html.Attributes.value (String.fromFloat model.speedModifier)
+                , Html.Attributes.type_ "range"
+                , Html.Attributes.step "0.1"
+                , Html.Events.onInput (\v -> SetSpeedModifier (String.toFloat v |> Maybe.withDefault model.speedModifier))
+                ]
+                []
             ]
         , div [ id "game-container" ]
             [ svg

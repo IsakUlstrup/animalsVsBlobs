@@ -13,14 +13,9 @@ type alias Character =
     }
 
 
-newCharacter : ( Float, Float ) -> ( Float, Float ) -> Float -> Character
-newCharacter ( x, y ) ( vx, vy ) size =
-    Character (newVector2 x y) (newVector2 vx vy) (newVector2 0 0) False size 0.007
-
-
-newPlayerCharacter : ( Float, Float ) -> ( Float, Float ) -> Float -> Float -> Character
-newPlayerCharacter ( x, y ) ( vx, vy ) size speed =
-    Character (newVector2 x y) (newVector2 vx vy) (newVector2 0 0) True size speed
+newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Character
+newCharacter ( x, y ) player size speed =
+    Character (newVector2 x y) (newVector2 0 0) (newVector2 0 0) player size speed
 
 
 distanceBetween : Character -> Character -> Float
@@ -32,7 +27,7 @@ update : Float -> Character -> Character
 update dt character =
     let
         friction =
-            0.95
+            1 - (dt * 0.005)
     in
     { character
         | acceleration = Vector2.scale friction character.acceleration
