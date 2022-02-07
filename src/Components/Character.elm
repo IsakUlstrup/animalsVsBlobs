@@ -10,12 +10,13 @@ type alias Character =
     , player : Bool
     , radius : Float
     , movementSpeedModifier : Float
+    , appearance : Maybe String
     }
 
 
-newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Character
-newCharacter ( x, y ) player size speed =
-    Character (newVector2 x y) (newVector2 0 0) (newVector2 0 0) player size speed
+newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
+newCharacter ( x, y ) player size speed app =
+    Character (newVector2 x y) (newVector2 0 0) (newVector2 0 0) player size speed app
 
 
 distanceBetween : Character -> Character -> Float

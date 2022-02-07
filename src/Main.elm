@@ -4,6 +4,7 @@ import Browser
 import Browser.Events
 import Component exposing (Component, getCharacter)
 import Components.Character
+import Content.Characters exposing (blob, dog, elephant, mouse, panda)
 import Ecs
 import GameData exposing (GameScene)
 import Html exposing (Html, button, div, h3, input, p)
@@ -32,25 +33,33 @@ init : ( Model, Cmd Msg )
 init =
     ( Model
         (Ecs.emptyScene 10
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 0, 0 ) True 4 0.009) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 10, 5 ) True 4 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -5, 2 ) True 4 0.01) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 2, 40 ) True 4 0.006) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 40, -20 ) False 2 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 40, 40 ) False 3 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -40, -40 ) False 2 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -30, -44 ) False 1 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -25, 30 ) False 2 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -15, 30 ) False 5 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -45, 30 ) False 2 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( -45, 40 ) False 3 0.007) ]
-            |> Ecs.addEntity [ Component.characterComponent (Components.Character.newCharacter ( 45, -40 ) False 1 0.007) ]
+            |> Ecs.addEntity [ Component.characterComponent (panda ( 0, 0 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (dog ( 10, 0 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (mouse ( 10, 10 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (elephant ( -10, 10 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (elephant ( -12, 7 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (elephant ( -15, 3 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 40, 20 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 50, 20 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 40, 30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 30, 30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 20, 30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 10, 30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 11, 30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 12, 30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 13, 30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 14, 30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 15, 30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 15, 31 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 15, 32 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 14, 32 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (blob ( 12, 32 )) ]
             |> Ecs.addSystem movementSystem
             |> Ecs.addSystem aiSystem
             |> Ecs.addSystem deathSystem
         )
         0
-        30
+        50
         1
     , Cmd.none
     )
@@ -73,7 +82,7 @@ update msg model =
             ( { model
                 | scene =
                     model.scene
-                        |> Ecs.runSystems (GameData.GameTick (dt * model.speedModifier |> round |> toFloat))
+                        |> Ecs.runSystems (GameData.GameTick (dt * model.speedModifier))
               }
             , Cmd.none
             )
@@ -100,11 +109,12 @@ viewCharacter character =
                 "magenta"
 
         textLabel c =
-            if c.player then
-                "🐼"
+            case c.appearance of
+                Just a ->
+                    a
 
-            else
-                ""
+                _ ->
+                    ""
 
         char c =
             if c.player then
@@ -129,16 +139,17 @@ viewCharacter character =
                     []
     in
     g
-        [ Svg.Attributes.transform
-            ("translate("
+        [ Svg.Attributes.style
+            ("transform: translate("
                 ++ String.fromFloat character.position.x
-                ++ " "
+                ++ "px, "
                 ++ String.fromFloat character.position.y
-                ++ ") scale("
+                ++ "px) scale("
                 ++ String.fromFloat character.radius
-                ++ ")"
+                ++ "); user-select: none;"
             )
-        , Svg.Attributes.style "user-select: none"
+
+        -- , Svg.Attributes.style "user-select: none"
         , Svg.Attributes.class "character"
         ]
         [ char character ]
@@ -186,6 +197,7 @@ view model =
             , input
                 [ Html.Attributes.max "5"
                 , Html.Attributes.min "0"
+                , Html.Attributes.step "0.1"
                 , Html.Attributes.value (String.fromFloat model.speedModifier)
                 , Html.Attributes.type_ "range"
 
