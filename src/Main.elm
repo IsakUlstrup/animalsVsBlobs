@@ -73,7 +73,7 @@ update msg model =
             ( { model
                 | scene =
                     model.scene
-                        |> Ecs.runSystems (GameData.GameTick (dt * model.speedModifier))
+                        |> Ecs.runSystems (GameData.GameTick (dt * model.speedModifier |> round |> toFloat))
               }
             , Cmd.none
             )
@@ -188,7 +188,8 @@ view model =
                 , Html.Attributes.min "0"
                 , Html.Attributes.value (String.fromFloat model.speedModifier)
                 , Html.Attributes.type_ "range"
-                , Html.Attributes.step "0.1"
+
+                -- , Html.Attributes.step "0.1"
                 , Html.Events.onInput (\v -> SetSpeedModifier (String.toFloat v |> Maybe.withDefault model.speedModifier))
                 ]
                 []

@@ -1,4 +1,19 @@
-module Components.Vector2 exposing (Vector2, add, directionTo, distanceTo, multi, negate, negateX, negateY, newVector2, normalize, scale, setX, setY, sub)
+module Components.Vector2 exposing
+    ( Vector2
+    , add
+    , directionTo
+    , distanceTo
+    , multi
+    , negate
+    , negateX
+    , negateY
+    , newVector2
+    , normalize
+    , scale
+    , setX
+    , setY
+    , sub
+    )
 
 
 type alias Vector2 =

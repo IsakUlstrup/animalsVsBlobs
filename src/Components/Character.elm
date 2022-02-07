@@ -125,15 +125,15 @@ collision : List Character -> Character -> Character
 collision chars char =
     List.foldl
         (\c1 c2 ->
-            if isColliding c1 c2 && c1 /= c2 then
-                let
-                    shift =
-                        Vector2.sub c2.position c1.position
-                            |> Vector2.normalize
-
-                    -- |> Vector2.scale 0.1
-                in
-                if c1.player /= c2.player then
+            if c1.player /= c2.player && c1 /= c2 then
+                -- only check collision betweeen enemies, ignore self
+                if isColliding c1 c2 then
+                    let
+                        shift =
+                            Vector2.sub c2.position c1.position
+                                |> Vector2.normalize
+                    in
+                    -- resolve collision
                     { c2
                         | position = Vector2.add c2.position shift
                         , radius = c2.radius - 0.2
@@ -142,10 +142,6 @@ collision chars char =
 
                 else
                     c2
-                -- { c2
-                --     | position = Vector2.add c2.position shift
-                -- }
-                --     |> applyForce (Vector2.scale (c1.radius * 5) shift)
 
             else
                 c2
