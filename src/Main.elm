@@ -5,7 +5,7 @@ import Browser.Events
 import Component exposing (Component, getCharacter)
 import Components.Character
 import Components.Vector2
-import Content.Characters exposing (blob, dog, elephant, mouse, panda)
+import Content.Characters exposing (blob, dog, elephant, fox, mouse, panda)
 import Ecs
 import GameData exposing (GameScene)
 import Html exposing (Html, button, div, h3, input, p)
@@ -39,9 +39,8 @@ init =
             |> Ecs.addEntity [ Component.characterComponent (panda ( 0, 0 )) ]
             |> Ecs.addEntity [ Component.characterComponent (dog ( 10, 0 )) ]
             |> Ecs.addEntity [ Component.characterComponent (mouse ( 10, 10 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (elephant ( -10, 10 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (elephant ( -12, 7 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (elephant ( -15, 3 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (elephant ( -20, -30 )) ]
+            |> Ecs.addEntity [ Component.characterComponent (fox ( 15, 10 )) ]
             |> Ecs.addEntity [ Component.characterComponent (blob ( 40, 20 )) ]
             |> Ecs.addEntity [ Component.characterComponent (blob ( 50, 20 )) ]
             |> Ecs.addEntity [ Component.characterComponent (blob ( 40, 30 )) ]
@@ -64,7 +63,7 @@ init =
         0
         50
         1
-        True
+        False
         100
     , Cmd.none
     )
@@ -174,6 +173,7 @@ viewCharacter debug character =
                         , Svg.Attributes.y2 (String.fromFloat vel.y)
                         , Svg.Attributes.stroke "yellow"
                         , Svg.Attributes.strokeWidth "0.1"
+                        , Svg.Attributes.strokeLinecap "round"
                         ]
                         []
                     , Svg.line
@@ -183,6 +183,7 @@ viewCharacter debug character =
                         , Svg.Attributes.y2 (String.fromFloat acc.y)
                         , Svg.Attributes.stroke "red"
                         , Svg.Attributes.strokeWidth "0.1"
+                        , Svg.Attributes.strokeLinecap "round"
                         ]
                         []
                     ]

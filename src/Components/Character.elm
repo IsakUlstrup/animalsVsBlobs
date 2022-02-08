@@ -11,12 +11,18 @@ type alias Character =
     , radius : Float
     , movementSpeedModifier : Float
     , appearance : Maybe String
+    , aggressive : Bool
     }
 
 
 newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
 newCharacter ( x, y ) player size speed app =
-    Character (newVector2 x y) (newVector2 0 0) (newVector2 0 0) player size speed app
+    Character (newVector2 x y) (newVector2 0 0) (newVector2 0 0) player size speed app True
+
+
+newPassiveCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
+newPassiveCharacter ( x, y ) player size speed app =
+    Character (newVector2 x y) (newVector2 0 0) (newVector2 0 0) player size speed app False
 
 
 distanceBetween : Character -> Character -> Float
@@ -40,34 +46,77 @@ update dt character =
         |> constrainPosition
 
 
-constrainPosition : Character -> Character
-constrainPosition character =
+constrainLeft : Character -> Character
+constrainLeft character =
     if character.position.x < -50 + character.radius then
         { character
             | position = Vector2.setX (-50 + character.radius) character.position
             , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
-            , velocity = Vector2.negateX character.velocity
+
+            -- , velocity = Vector2.negateX character.velocity
+            , velocity = Vector2.setX 0 character.velocity
         }
+
+    else
+        character
+
+
+constrainRight : Character -> Character
+constrainRight character =
+    if character.position.x > 50 - character.radius then
+        { character
+            | position = Vector2.setX (50 - character.radius) character.position
+            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
+
+            -- , velocity = Vector2.negateX character.velocity
+            , velocity = Vector2.setX 0 character.velocity
+        }
+
+    else
+        character
+
+
+constrainPosition : Character -> Character
+constrainPosition character =
+    -- TODO: handle a character being out of bounds in two dimensions at the same time
+    -- left
+    if character.position.x < -50 + character.radius then
+        { character
+            | position = Vector2.setX (-50 + character.radius) character.position
+            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
+
+            -- , velocity = Vector2.negateX character.velocity
+            , velocity = Vector2.setX 0 character.velocity
+        }
+        -- right
 
     else if character.position.x > 50 - character.radius then
         { character
             | position = Vector2.setX (50 - character.radius) character.position
             , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
-            , velocity = Vector2.negateX character.velocity
+
+            -- , velocity = Vector2.negateX character.velocity
+            , velocity = Vector2.setX 0 character.velocity
         }
+        -- top
 
     else if character.position.y < -50 + character.radius then
         { character
             | position = Vector2.setY (-50 + character.radius) character.position
             , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateY
-            , velocity = Vector2.negateY character.velocity
+
+            -- , velocity = Vector2.negateY character.velocity
+            , velocity = Vector2.setY 0 character.velocity
         }
+        -- bottom
 
     else if character.position.y > 50 - character.radius then
         { character
             | position = Vector2.setY (50 - character.radius) character.position
             , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateY
-            , velocity = Vector2.negateY character.velocity
+
+            -- , velocity = Vector2.negateY character.velocity
+            , velocity = Vector2.setY 0 character.velocity
         }
 
     else
@@ -118,6 +167,34 @@ moveTowardsClosestEnemy characters char =
             { char | velocity = newVector2 0 0 }
 
 
+keepEnemyDistance : Float -> List Character -> Character -> Character
+keepEnemyDistance safeDistance characters char =
+    case closestEnemy char characters of
+        Just target ->
+            let
+                dist =
+                    Vector2.distanceTo char.position target.position
+            in
+            if dist < safeDistance then
+                -- Enemy is too close, move away
+                { char | velocity = directionTo char.position target.position |> Vector2.scale (1 - (dist / safeDistance)) |> Vector2.negate }
+
+            else
+                { char | velocity = newVector2 0 0 }
+
+        Nothing ->
+            { char | velocity = newVector2 0 0 }
+
+
+aiMove : List Character -> Character -> Character
+aiMove characters char =
+    if char.aggressive then
+        moveTowardsClosestEnemy characters char
+
+    else
+        keepEnemyDistance 25 characters char
+
+
 isColliding : Character -> Character -> Bool
 isColliding c1 c2 =
     distanceBetween c1 c2 < c1.radius + c2.radius
@@ -131,14 +208,13 @@ collision chars char =
                 -- only check collision betweeen enemies, ignore self
                 if isColliding c1 c2 then
                     let
-                        overlap =
-                            Vector2.distanceTo c1.position c2.position
-                                - (c1.radius + c2.radius)
-                                |> abs
-
                         shift =
                             Vector2.sub c2.position c1.position
-                                |> Vector2.scale overlap
+                                |> Vector2.scale
+                                    (Vector2.distanceTo c1.position c2.position
+                                        - (c1.radius + c2.radius)
+                                        |> abs
+                                    )
                     in
                     -- resolve collision
                     { c2
@@ -146,7 +222,7 @@ collision chars char =
 
                         -- , radius = c2.radius - 0.05
                     }
-                        |> applyForce (Vector2.scale (c2.radius * 0.7) shift)
+                        |> applyForce (Vector2.scale (c1.radius * 0.7) shift)
 
                 else
                     c2

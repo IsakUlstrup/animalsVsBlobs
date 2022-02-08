@@ -15,7 +15,7 @@ aiSystem msg scene =
                     Ecs.mapComponents (\_ c -> Component.getCharacter c) scene |> List.filterMap identity
             in
             scene
-                |> Ecs.updateComponents (Component.updateCharacter (Components.Character.moveTowardsClosestEnemy characters))
+                |> Ecs.updateComponents (Component.updateCharacter (Components.Character.aiMove characters))
 
         _ ->
             scene
