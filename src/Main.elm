@@ -258,7 +258,13 @@ view model =
                 [ text "render debug: "
                 , input
                     [ Html.Attributes.type_ "button"
-                    , Html.Attributes.value (Debug.toString model.renderDebug)
+                    , Html.Attributes.value
+                        (if model.renderDebug then
+                            "True"
+
+                         else
+                            "False"
+                        )
                     , Html.Events.onClick (SetRenderDebug (not model.renderDebug))
                     ]
                     []
