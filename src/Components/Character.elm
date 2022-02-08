@@ -34,7 +34,8 @@ update dt character =
         | acceleration = Vector2.scale friction character.acceleration
         , position =
             character.position
-                |> Vector2.add (Vector2.scale (dt * character.movementSpeedModifier) (Vector2.add character.velocity character.acceleration))
+                |> Vector2.add (Vector2.scale (dt * character.movementSpeedModifier) character.velocity)
+                |> Vector2.add (Vector2.scale (dt * 0.1) character.acceleration)
     }
         |> constrainPosition
 
@@ -44,28 +45,28 @@ constrainPosition character =
     if character.position.x < -50 + character.radius then
         { character
             | position = Vector2.setX (-50 + character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.9 |> Vector2.negateX
+            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
             , velocity = Vector2.negateX character.velocity
         }
 
     else if character.position.x > 50 - character.radius then
         { character
             | position = Vector2.setX (50 - character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.9 |> Vector2.negateX
+            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
             , velocity = Vector2.negateX character.velocity
         }
 
     else if character.position.y < -50 + character.radius then
         { character
             | position = Vector2.setY (-50 + character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.9 |> Vector2.negateY
+            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateY
             , velocity = Vector2.negateY character.velocity
         }
 
     else if character.position.y > 50 - character.radius then
         { character
             | position = Vector2.setY (50 - character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.9 |> Vector2.negateY
+            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateY
             , velocity = Vector2.negateY character.velocity
         }
 
@@ -130,16 +131,22 @@ collision chars char =
                 -- only check collision betweeen enemies, ignore self
                 if isColliding c1 c2 then
                     let
+                        overlap =
+                            Vector2.distanceTo c1.position c2.position
+                                - (c1.radius + c2.radius)
+                                |> abs
+
                         shift =
                             Vector2.sub c2.position c1.position
-                                |> Vector2.normalize
+                                |> Vector2.scale overlap
                     in
                     -- resolve collision
                     { c2
                         | position = Vector2.add c2.position shift
-                        , radius = c2.radius - 0.2
+
+                        -- , radius = c2.radius - 0.05
                     }
-                        |> applyForce (Vector2.scale (c1.radius * 5) shift)
+                        |> applyForce (Vector2.scale (c2.radius * 0.7) shift)
 
                 else
                     c2

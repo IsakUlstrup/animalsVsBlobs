@@ -31,10 +31,10 @@
     transform: rotate(0deg);
   }
   40% {
-    transform: rotate(-10deg);
+    transform: rotate(-3deg);
   }
   80% {
-    transform: rotate(10deg);
+    transform: rotate(3deg);
   }
   100% {
     transform: rotate(0deg) ;
@@ -92,5 +92,6 @@
 }
 
 .player {
-  animation: player-walk 0.5s infinite;
+  animation: player-walk 0.4s infinite;
+  transform-origin: 0 2px;
 }

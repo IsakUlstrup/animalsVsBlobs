@@ -15,12 +15,12 @@ dog ( x, y ) =
 
 mouse : ( Float, Float ) -> Character
 mouse ( x, y ) =
-    Components.Character.newCharacter ( x, y ) True 3 0.05 (Just "🐭")
+    Components.Character.newCharacter ( x, y ) True 3 0.09 (Just "🐭")
 
 
 elephant : ( Float, Float ) -> Character
 elephant ( x, y ) =
-    Components.Character.newCharacter ( x, y ) True 5 0.005 (Just "🐘")
+    Components.Character.newCharacter ( x, y ) True 6 0.005 (Just "🐘")
 
 
 blob : ( Float, Float ) -> Character

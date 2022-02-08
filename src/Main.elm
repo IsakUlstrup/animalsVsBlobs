@@ -4,6 +4,7 @@ import Browser
 import Browser.Events
 import Component exposing (Component, getCharacter)
 import Components.Character
+import Components.Vector2
 import Content.Characters exposing (blob, dog, elephant, mouse, panda)
 import Ecs
 import GameData exposing (GameScene)
@@ -26,6 +27,8 @@ type alias Model =
     , timeAccum : Float
     , tickTime : Float
     , speedModifier : Float
+    , renderDebug : Bool
+    , deltaCap : Float
     }
 
 
@@ -61,6 +64,8 @@ init =
         0
         50
         1
+        True
+        100
     , Cmd.none
     )
 
@@ -73,6 +78,7 @@ type Msg
     = Tick Float
     | Reset
     | SetSpeedModifier Float
+    | SetRenderDebug Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -82,7 +88,7 @@ update msg model =
             ( { model
                 | scene =
                     model.scene
-                        |> Ecs.runSystems (GameData.GameTick (dt * model.speedModifier))
+                        |> Ecs.runSystems (GameData.GameTick (min model.deltaCap dt * model.speedModifier))
               }
             , Cmd.none
             )
@@ -93,13 +99,16 @@ update msg model =
         SetSpeedModifier speed ->
             ( { model | speedModifier = speed }, Cmd.none )
 
+        SetRenderDebug flag ->
+            ( { model | renderDebug = flag }, Cmd.none )
+
 
 
 ---- VIEW ----
 
 
-viewCharacter : Components.Character.Character -> Svg msg
-viewCharacter character =
+viewCharacter : Bool -> Components.Character.Character -> Svg msg
+viewCharacter debug character =
     let
         fillColor c =
             if c.player then
@@ -137,6 +146,50 @@ viewCharacter character =
                     , Svg.Attributes.class "blob"
                     ]
                     []
+
+        viewVectors c =
+            if debug then
+                let
+                    vel =
+                        Components.Vector2.scale 2 c.velocity
+
+                    acc =
+                        Components.Vector2.scale 2 c.acceleration
+                in
+                [ g []
+                    -- <line x1="0" y1="80" x2="100" y2="20" stroke="black" />
+                    [ Svg.circle
+                        [ Svg.Attributes.cx "0"
+                        , Svg.Attributes.cy "0"
+                        , Svg.Attributes.r "1"
+                        , Svg.Attributes.stroke "cyan"
+                        , Svg.Attributes.strokeWidth "0.1"
+                        , Svg.Attributes.fill "none"
+                        ]
+                        []
+                    , Svg.line
+                        [ Svg.Attributes.x1 "0"
+                        , Svg.Attributes.y1 "0"
+                        , Svg.Attributes.x2 (String.fromFloat vel.x)
+                        , Svg.Attributes.y2 (String.fromFloat vel.y)
+                        , Svg.Attributes.stroke "yellow"
+                        , Svg.Attributes.strokeWidth "0.1"
+                        ]
+                        []
+                    , Svg.line
+                        [ Svg.Attributes.x1 "0"
+                        , Svg.Attributes.y1 "0"
+                        , Svg.Attributes.x2 (String.fromFloat acc.x)
+                        , Svg.Attributes.y2 (String.fromFloat acc.y)
+                        , Svg.Attributes.stroke "red"
+                        , Svg.Attributes.strokeWidth "0.1"
+                        ]
+                        []
+                    ]
+                ]
+
+            else
+                []
     in
     g
         [ Svg.Attributes.style
@@ -148,18 +201,16 @@ viewCharacter character =
                 ++ String.fromFloat character.radius
                 ++ "); user-select: none;"
             )
-
-        -- , Svg.Attributes.style "user-select: none"
         , Svg.Attributes.class "character"
         ]
-        [ char character ]
+        (char character :: viewVectors character)
 
 
-viewCharacterWrapper : ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg msg)
-viewCharacterWrapper ( entity, components ) =
+viewCharacterWrapper : Bool -> ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg msg)
+viewCharacterWrapper debug ( entity, components ) =
     case List.filterMap getCharacter (List.map Tuple.second components) |> List.head of
         Just char ->
-            Just (viewCharacter char)
+            Just (viewCharacter debug char)
 
         _ ->
             Nothing
@@ -200,11 +251,18 @@ view model =
                 , Html.Attributes.step "0.1"
                 , Html.Attributes.value (String.fromFloat model.speedModifier)
                 , Html.Attributes.type_ "range"
-
-                -- , Html.Attributes.step "0.1"
                 , Html.Events.onInput (\v -> SetSpeedModifier (String.toFloat v |> Maybe.withDefault model.speedModifier))
                 ]
                 []
+            , p []
+                [ text "render debug: "
+                , input
+                    [ Html.Attributes.type_ "button"
+                    , Html.Attributes.value (Debug.toString model.renderDebug)
+                    , Html.Events.onClick (SetRenderDebug (not model.renderDebug))
+                    ]
+                    []
+                ]
             ]
         , div [ id "game-container" ]
             [ svg
@@ -213,7 +271,7 @@ view model =
                 ]
                 (viewGameArea
                     :: blobGradient
-                    :: (Ecs.mapComponentGroups viewCharacterWrapper model.scene
+                    :: (Ecs.mapComponentGroups (viewCharacterWrapper model.renderDebug) model.scene
                             |> List.filterMap identity
                        )
                 )
