@@ -18,3 +18,4 @@ type GameMsg
       -- (skill parent part id, skill index) (target component id, skill effect)
     | UseSkill ( EcsId, Int ) ( EcsId, SkillEffect )
     | SetSkillTarget EcsId
+    | MousePosition ( Float, Float )

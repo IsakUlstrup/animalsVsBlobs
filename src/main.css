@@ -95,3 +95,10 @@
   animation: player-walk 0.4s infinite;
   transform-origin: 0 2px;
 }
+
+.particle {
+  fill: white;
+  fill-opacity: 0.8;
+  stroke: magenta;
+  stroke-width: 0.1;
+}

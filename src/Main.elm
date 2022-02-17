@@ -2,20 +2,21 @@ module Main exposing (..)
 
 import Browser
 import Browser.Events
-import Component exposing (Component, getCharacter)
+import Component exposing (Component, getCharacter, getPhysics)
 import Components.Character
+import Components.Physics
 import Components.Vector2
-import Content.Characters exposing (blob, dog, elephant, fox, mouse, panda)
+import Content.Particles
 import Ecs
 import GameData exposing (GameScene)
 import Html exposing (Html, button, div, h3, input, p)
 import Html.Attributes
 import Html.Events
+import Json.Decode as Decode
 import Svg exposing (Svg, g, svg, text, text_)
 import Svg.Attributes exposing (class, id, viewBox)
-import Systems.AISystem exposing (aiSystem)
-import Systems.DeathSystem exposing (deathSystem)
-import Systems.MovementSystem exposing (movementSystem)
+import Svg.Events
+import Systems.PhysicsSystem exposing (physicsSystem)
 
 
 
@@ -29,42 +30,28 @@ type alias Model =
     , speedModifier : Float
     , renderDebug : Bool
     , deltaCap : Float
+    , mousePos : ( Int, Int )
     }
+
+
+initScene : GameScene
+initScene =
+    Ecs.emptyScene 10
+        |> Ecs.addEntity (Content.Particles.particle ( 0, 0 ) ( 1, -2 ))
+        |> Ecs.addEntity (Content.Particles.particle ( 10, 3 ) ( -0.5, -1 ))
+        |> Ecs.addSystem physicsSystem
 
 
 init : ( Model, Cmd Msg )
 init =
     ( Model
-        (Ecs.emptyScene 10
-            |> Ecs.addEntity [ Component.characterComponent (panda ( 0, 0 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (dog ( 10, 0 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (mouse ( 10, 10 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (elephant ( -20, -30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (fox ( 15, 10 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 40, 20 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 50, 20 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 40, 30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 30, 30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 20, 30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 10, 30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 11, 30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 12, 30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 13, 30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 14, 30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 15, 30 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 15, 31 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 15, 32 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 14, 32 )) ]
-            |> Ecs.addEntity [ Component.characterComponent (blob ( 12, 32 )) ]
-            |> Ecs.addSystem movementSystem
-            |> Ecs.addSystem aiSystem
-            |> Ecs.addSystem deathSystem
-        )
+        initScene
         0
         50
         1
-        False
+        True
         100
+        ( 0, 0 )
     , Cmd.none
     )
 
@@ -73,11 +60,19 @@ init =
 ---- UPDATE ----
 
 
+decodeMouseEvent : Decode.Decoder ( Int, Int )
+decodeMouseEvent =
+    Decode.map2 (\x y -> ( x, y ))
+        (Decode.field "movementX" Decode.int)
+        (Decode.field "movementY" Decode.int)
+
+
 type Msg
     = Tick Float
     | Reset
     | SetSpeedModifier Float
     | SetRenderDebug Bool
+    | MouseMove ( Int, Int )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,19 +82,26 @@ update msg model =
             ( { model
                 | scene =
                     model.scene
-                        |> Ecs.runSystems (GameData.GameTick (min model.deltaCap dt * model.speedModifier))
+                        |> Ecs.runSystems (GameData.GameTick (min model.deltaCap dt * 0.01 * model.speedModifier))
               }
             , Cmd.none
             )
 
         Reset ->
-            init
+            ( { model | scene = initScene }, Cmd.none )
 
         SetSpeedModifier speed ->
             ( { model | speedModifier = speed }, Cmd.none )
 
         SetRenderDebug flag ->
             ( { model | renderDebug = flag }, Cmd.none )
+
+        MouseMove ( x, y ) ->
+            ( { model
+                | mousePos = ( Tuple.first model.mousePos + x, Tuple.second model.mousePos + y )
+              }
+            , Cmd.none
+            )
 
 
 
@@ -217,6 +219,79 @@ viewCharacterWrapper debug ( entity, components ) =
             Nothing
 
 
+viewParticleWrapper : Bool -> ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg msg)
+viewParticleWrapper debug ( entity, components ) =
+    case List.filterMap getPhysics (List.map Tuple.second components) |> List.head of
+        Just phys ->
+            Just (viewParticle debug phys)
+
+        _ ->
+            Nothing
+
+
+viewParticle : Bool -> Components.Physics.Physics -> Svg msg
+viewParticle debug character =
+    let
+        viewVectors c =
+            if debug then
+                let
+                    vel =
+                        Components.Vector2.scale 3 c.velocity
+
+                    acc =
+                        Components.Vector2.scale 3 c.acceleration
+                in
+                [ g []
+                    -- <line x1="0" y1="80" x2="100" y2="20" stroke="black" />
+                    [ Svg.line
+                        [ Svg.Attributes.x1 "0"
+                        , Svg.Attributes.y1 "0"
+                        , Svg.Attributes.x2 (String.fromFloat vel.x)
+                        , Svg.Attributes.y2 (String.fromFloat vel.y)
+                        , Svg.Attributes.stroke "yellow"
+                        , Svg.Attributes.strokeWidth "0.1"
+                        , Svg.Attributes.strokeLinecap "round"
+                        ]
+                        []
+                    , Svg.line
+                        [ Svg.Attributes.x1 "0"
+                        , Svg.Attributes.y1 "0"
+                        , Svg.Attributes.x2 (String.fromFloat acc.x)
+                        , Svg.Attributes.y2 (String.fromFloat acc.y)
+                        , Svg.Attributes.stroke "red"
+                        , Svg.Attributes.strokeWidth "0.1"
+                        , Svg.Attributes.strokeLinecap "round"
+                        ]
+                        []
+                    ]
+                ]
+
+            else
+                []
+    in
+    g
+        [ Svg.Attributes.style
+            ("transform: translate("
+                ++ String.fromFloat character.position.x
+                ++ "px, "
+                ++ String.fromFloat character.position.y
+                ++ "px) scale("
+                ++ String.fromFloat (Components.Physics.getRadius character)
+                ++ "); user-select: none;"
+            )
+        , Svg.Attributes.class "character"
+        ]
+        (Svg.circle
+            [ Svg.Attributes.cx "0"
+            , Svg.Attributes.cy "0"
+            , Svg.Attributes.r "1"
+            , Svg.Attributes.class "particle"
+            ]
+            []
+            :: viewVectors character
+        )
+
+
 viewGameArea : Svg msg
 viewGameArea =
     Svg.rect
@@ -275,10 +350,18 @@ view model =
             [ svg
                 [ viewBox "-50 -50 100 100"
                 , Svg.Attributes.preserveAspectRatio "xMidYMid meet"
+                , Svg.Events.on "mousemove" (Decode.map MouseMove decodeMouseEvent)
                 ]
                 (viewGameArea
                     :: blobGradient
-                    :: (Ecs.mapComponentGroups (viewCharacterWrapper model.renderDebug) model.scene
+                    -- :: Svg.circle
+                    --     [ Svg.Attributes.cx (String.fromInt (Tuple.first model.mousePos))
+                    --     , Svg.Attributes.cy (String.fromInt (Tuple.second model.mousePos))
+                    --     , Svg.Attributes.r "1"
+                    --     , Svg.Attributes.class "particle"
+                    --     ]
+                    --     []
+                    :: (Ecs.mapComponentGroups (viewParticleWrapper model.renderDebug) model.scene
                             |> List.filterMap identity
                        )
                 )

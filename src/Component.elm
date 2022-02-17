@@ -1,10 +1,12 @@
-module Component exposing (Component, characterComponent, characterPred, getCharacter, updateCharacter)
+module Component exposing (Component, characterComponent, characterPred, getCharacter, getPhysics, physicsComponent, physicsPred, updateCharacter, updatePhysics)
 
 import Components.Character exposing (Character)
+import Components.Physics exposing (Physics)
 
 
 type Component
     = Character Character
+    | Physics Physics
 
 
 
@@ -22,6 +24,9 @@ getCharacter c =
         Character ch ->
             Just ch
 
+        _ ->
+            Nothing
+
 
 updateCharacter : (Character -> Character) -> Component -> Component
 updateCharacter f c =
@@ -29,9 +34,54 @@ updateCharacter f c =
         Character m ->
             Character (f m)
 
+        _ ->
+            c
+
 
 characterPred : (Character -> Bool) -> Component -> Bool
 characterPred pred c =
     case c of
         Character char ->
             pred char
+
+        _ ->
+            False
+
+
+
+---- Physics ----
+
+
+physicsComponent : Physics -> Component
+physicsComponent physics =
+    Physics physics
+
+
+getPhysics : Component -> Maybe Physics
+getPhysics c =
+    case c of
+        Physics p ->
+            Just p
+
+        _ ->
+            Nothing
+
+
+updatePhysics : (Physics -> Physics) -> Component -> Component
+updatePhysics f c =
+    case c of
+        Physics p ->
+            Physics (f p)
+
+        _ ->
+            c
+
+
+physicsPred : (Physics -> Bool) -> Component -> Bool
+physicsPred pred c =
+    case c of
+        Physics char ->
+            pred char
+
+        _ ->
+            False

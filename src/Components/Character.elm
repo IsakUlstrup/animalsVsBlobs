@@ -1,6 +1,6 @@
 module Components.Character exposing (..)
 
-import Components.Vector2 as Vector2 exposing (Vector2, directionTo, newVector2)
+import Components.Vector2 as Vector2 exposing (Vector2, direction, new)
 
 
 type alias Character =
@@ -17,17 +17,17 @@ type alias Character =
 
 newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
 newCharacter ( x, y ) player size speed app =
-    Character (newVector2 x y) (newVector2 0 0) (newVector2 0 0) player size speed app True
+    Character (new x y) (new 0 0) (new 0 0) player size speed app True
 
 
 newPassiveCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
 newPassiveCharacter ( x, y ) player size speed app =
-    Character (newVector2 x y) (newVector2 0 0) (newVector2 0 0) player size speed app False
+    Character (new x y) (new 0 0) (new 0 0) player size speed app False
 
 
 distanceBetween : Character -> Character -> Float
 distanceBetween c1 c2 =
-    Vector2.distanceTo c1.position c2.position
+    Vector2.distance c1.position c2.position
 
 
 update : Float -> Character -> Character
@@ -125,7 +125,7 @@ constrainPosition character =
 
 setMoveTarget : Character -> Character -> Character
 setMoveTarget target character =
-    { character | velocity = directionTo character.position target.position }
+    { character | velocity = direction character.position target.position }
 
 
 applyForce : Vector2 -> Character -> Character
@@ -164,7 +164,7 @@ moveTowardsClosestEnemy characters char =
             setMoveTarget target char
 
         Nothing ->
-            { char | velocity = newVector2 0 0 }
+            { char | velocity = new 0 0 }
 
 
 keepEnemyDistance : Float -> List Character -> Character -> Character
@@ -173,17 +173,17 @@ keepEnemyDistance safeDistance characters char =
         Just target ->
             let
                 dist =
-                    Vector2.distanceTo char.position target.position
+                    Vector2.distance char.position target.position
             in
             if dist < safeDistance then
                 -- Enemy is too close, move away
-                { char | velocity = directionTo char.position target.position |> Vector2.scale (1 - (dist / safeDistance)) |> Vector2.negate }
+                { char | velocity = direction char.position target.position |> Vector2.scale (1 - (dist / safeDistance)) |> Vector2.negate }
 
             else
-                { char | velocity = newVector2 0 0 }
+                { char | velocity = new 0 0 }
 
         Nothing ->
-            { char | velocity = newVector2 0 0 }
+            { char | velocity = new 0 0 }
 
 
 aiMove : List Character -> Character -> Character
@@ -209,9 +209,9 @@ collision chars char =
                 if isColliding c1 c2 then
                     let
                         shift =
-                            Vector2.sub c2.position c1.position
+                            Vector2.subtract c2.position c1.position
                                 |> Vector2.scale
-                                    (Vector2.distanceTo c1.position c2.position
+                                    (Vector2.distance c1.position c2.position
                                         - (c1.radius + c2.radius)
                                         |> abs
                                     )
