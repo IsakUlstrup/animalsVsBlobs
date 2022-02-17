@@ -15,7 +15,6 @@ import Html.Events
 import Json.Decode as Decode
 import Svg exposing (Svg, g, svg, text, text_)
 import Svg.Attributes exposing (class, id, viewBox)
-import Svg.Events
 import Systems.PhysicsSystem exposing (physicsSystem)
 
 
@@ -302,9 +301,10 @@ viewGameArea =
         , Svg.Attributes.y "-50"
         , Svg.Attributes.width "100"
         , Svg.Attributes.height "100"
+
+        -- , Svg.Attributes.stroke "magenta"
+        -- , Svg.Attributes.strokeWidth "0.5"
         , Svg.Attributes.fill "#262626"
-        , Svg.Attributes.stroke "cyan"
-        , Svg.Attributes.strokeWidth "1"
         ]
         []
 
@@ -351,27 +351,13 @@ view model =
             ]
         , div [ id "game-container" ]
             [ svg
-                [ viewBox "-50 -50 100 100"
-                , Svg.Attributes.preserveAspectRatio "xMidYMid meet"
-                , Svg.Events.on "mousemove" (Decode.map MouseMove decodeMouseEvent)
-                ]
+                [ viewBox "-50 -50 100 100" ]
                 (viewGameArea
                     :: blobGradient
-                    -- :: Svg.circle
-                    --     [ Svg.Attributes.cx (String.fromInt (Tuple.first model.mousePos))
-                    --     , Svg.Attributes.cy (String.fromInt (Tuple.second model.mousePos))
-                    --     , Svg.Attributes.r "1"
-                    --     , Svg.Attributes.class "particle"
-                    --     ]
-                    --     []
                     :: (Ecs.mapComponentGroups (viewParticleWrapper model.renderDebug) model.scene
                             |> List.filterMap identity
                        )
                 )
-            ]
-        , div [ class "game-ui" ]
-            [ h3 [] [ text "Game UI" ]
-            , p [] [ text "Lorem ipsum etc" ]
             ]
         ]
 
