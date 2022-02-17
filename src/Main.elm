@@ -39,6 +39,9 @@ initScene =
     Ecs.emptyScene 10
         |> Ecs.addEntity (Content.Particles.particle ( 0, 0 ) ( 1, -2 ))
         |> Ecs.addEntity (Content.Particles.particle ( 10, 3 ) ( -0.5, -1 ))
+        |> Ecs.addEntity (Content.Particles.particle ( 13, 9 ) ( -0.5, -0.7 ))
+        |> Ecs.addEntity (Content.Particles.advancedParticle ( 17, -9 ) ( -0.2, -0.3 ) 6)
+        |> Ecs.addEntity (Content.Particles.advancedParticle ( 8, -2 ) ( -0.1, -0.1 ) 4)
         |> Ecs.addSystem physicsSystem
 
 
@@ -82,7 +85,7 @@ update msg model =
             ( { model
                 | scene =
                     model.scene
-                        |> Ecs.runSystems (GameData.GameTick (min model.deltaCap dt * 0.01 * model.speedModifier))
+                        |> Ecs.runSystems (GameData.GameTick (min model.deltaCap dt * 0.03 * model.speedModifier))
               }
             , Cmd.none
             )
@@ -239,7 +242,7 @@ viewParticle debug character =
                         Components.Vector2.scale 3 c.velocity
 
                     acc =
-                        Components.Vector2.scale 3 c.acceleration
+                        Components.Vector2.scale 5 c.acceleration
                 in
                 [ g []
                     -- <line x1="0" y1="80" x2="100" y2="20" stroke="black" />

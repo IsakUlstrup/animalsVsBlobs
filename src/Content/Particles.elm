@@ -8,7 +8,17 @@ particle : ( Float, Float ) -> ( Float, Float ) -> List Component
 particle ( x, y ) velocity =
     [ Component.physicsComponent
         (initPhysics ( x, y )
-            |> withMass 5
+            |> withMass 3
+            |> withVelocity velocity
+        )
+    ]
+
+
+advancedParticle : ( Float, Float ) -> ( Float, Float ) -> Float -> List Component
+advancedParticle ( x, y ) velocity mass =
+    [ Component.physicsComponent
+        (initPhysics ( x, y )
+            |> withMass mass
             |> withVelocity velocity
         )
     ]

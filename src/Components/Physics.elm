@@ -86,7 +86,7 @@ constrainY low high radius physics =
             | position = Vector2.setY (high - radius) physics.position
 
             -- , acceleration = physics.acceleration |> Vector2.negateY
-            , velocity = Vector2.negateY physics.velocity
+            , velocity = Vector2.negateScaleY 0.95 physics.velocity
         }
 
     else if physics.position.y <= low + radius then
@@ -94,7 +94,7 @@ constrainY low high radius physics =
             | position = Vector2.setY (low + radius) physics.position
 
             -- , acceleration = physics.acceleration |> Vector2.negateY
-            , velocity = Vector2.negateY physics.velocity
+            , velocity = Vector2.negateScaleY 0.95 physics.velocity
         }
 
     else
@@ -106,13 +106,13 @@ constrainX low high radius physics =
     if physics.position.x >= (high - radius) then
         { physics
             | position = Vector2.setX (high - radius) physics.position
-            , velocity = Vector2.negateX physics.velocity
+            , velocity = Vector2.negateScaleX 0.95 physics.velocity
         }
 
     else if physics.position.x <= low + radius then
         { physics
             | position = Vector2.setX (low + radius) physics.position
-            , velocity = Vector2.negateX physics.velocity
+            , velocity = Vector2.negateScaleX 0.95 physics.velocity
         }
 
     else

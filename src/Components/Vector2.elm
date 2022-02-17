@@ -7,6 +7,8 @@ module Components.Vector2 exposing
     , limitMagnitude
     , multiply
     , negate
+    , negateScaleX
+    , negateScaleY
     , negateX
     , negateY
     , new
@@ -67,6 +69,20 @@ negateY : Vector2 -> Vector2
 negateY vector =
     { vector
         | y = vector.y * -1
+    }
+
+
+negateScaleX : Float -> Vector2 -> Vector2
+negateScaleX s vector =
+    { vector
+        | x = vector.x * -1 * s
+    }
+
+
+negateScaleY : Float -> Vector2 -> Vector2
+negateScaleY s vector =
+    { vector
+        | y = vector.y * s * -1
     }
 
 
