@@ -36,11 +36,16 @@ type alias Model =
 initScene : GameScene
 initScene =
     Ecs.emptyScene 10
-        |> Ecs.addEntity (Content.Particles.particle ( 0, 0 ) ( 1, -2 ))
+        |> Ecs.addEntity (Content.Particles.particle ( -30, 0 ) ( 2, 0 ))
+        |> Ecs.addEntity (Content.Particles.particle ( -20, 0 ) ( 0.001, 0 ))
+        |> Ecs.addEntity (Content.Particles.particle ( 10, 0 ) ( 0.001, 0 ))
+        |> Ecs.addEntity (Content.Particles.particle ( 20, 0 ) ( -0.5, -0.5 ))
+        |> Ecs.addEntity (Content.Particles.particle ( 30, -35 ) ( 0.3, 0 ))
         |> Ecs.addEntity (Content.Particles.particle ( 10, 3 ) ( -0.5, -1 ))
         |> Ecs.addEntity (Content.Particles.particle ( 13, 9 ) ( -0.5, -0.7 ))
-        |> Ecs.addEntity (Content.Particles.advancedParticle ( 17, -9 ) ( -0.2, -0.3 ) 6)
-        |> Ecs.addEntity (Content.Particles.advancedParticle ( 8, -2 ) ( -0.1, -0.1 ) 4)
+        |> Ecs.addEntity (Content.Particles.advancedParticle ( 17, -9 ) ( -0.2, -0.3 ) 6 3)
+        -- |> Ecs.addEntity (Content.Particles.advancedParticle ( 0, 0 ) ( 0, 0 ) 50 10)
+        |> Ecs.addEntity (Content.Particles.advancedParticle ( 0, 0 ) ( 0, 0 ) 30 5)
         |> Ecs.addSystem physicsSystem
 
 

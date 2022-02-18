@@ -4,7 +4,9 @@ module Components.Vector2 exposing
     , direction
     , distance
     , divide
+    , dot
     , limitMagnitude
+    , magnitude
     , multiply
     , negate
     , negateScaleX
@@ -137,6 +139,11 @@ magnitude vector =
     sqrt (vector.x ^ 2 + vector.y ^ 2)
 
 
+dot : Vector2 -> Vector2 -> Float
+dot v1 v2 =
+    (v1.x * v2.x) + (v1.y * v2.y)
+
+
 {-| Set vector magnitude
 -}
 setMagnitude : Float -> Vector2 -> Vector2
@@ -166,7 +173,7 @@ normalize vector =
 -}
 distance : Vector2 -> Vector2 -> Float
 distance v1 v2 =
-    sqrt (v1.x - v2.x ^ 2 + v1.y - v2.y ^ 2)
+    sqrt (((v1.x - v2.x) ^ 2) + ((v1.y - v2.y) ^ 2))
 
 
 {-| Returns a normalized vector pointing from origin to target
