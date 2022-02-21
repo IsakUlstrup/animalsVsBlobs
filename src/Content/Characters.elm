@@ -6,17 +6,17 @@ import Components.Character exposing (Character)
 
 panda : ( Float, Float ) -> Component
 panda ( x, y ) =
-    Component.characterComponent (Components.Character.newCharacter ( x, y ) True 20 0.009 (Just "🐼"))
+    Component.characterComponent (Components.Character.newCharacter ( x, y ) True 20 1 (Just "🐼"))
 
 
-dog : ( Float, Float ) -> Character
+dog : ( Float, Float ) -> Component
 dog ( x, y ) =
-    Components.Character.newCharacter ( x, y ) True 3 0.01 (Just "🐶")
+    Component.characterComponent (Components.Character.newCharacter ( x, y ) True 17 1.2 (Just "🐶"))
 
 
-mouse : ( Float, Float ) -> Character
+mouse : ( Float, Float ) -> Component
 mouse ( x, y ) =
-    Components.Character.newCharacter ( x, y ) True 3 0.07 (Just "🐭")
+    Component.characterComponent (Components.Character.newCharacter ( x, y ) True 15 2 (Just "🐭"))
 
 
 elephant : ( Float, Float ) -> Character

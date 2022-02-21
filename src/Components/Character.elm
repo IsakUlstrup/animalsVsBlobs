@@ -50,6 +50,17 @@ update dt character =
 
                 ManualMove trgt ->
                     Vector2.distance character.position trgt
+
+        target =
+            case character.state of
+                Idle ->
+                    Nothing
+
+                AiMove trgt ->
+                    Just trgt
+
+                ManualMove trgt ->
+                    Just trgt
     in
     -- { character
     --     | acceleration = Vector2.scale friction character.acceleration
@@ -59,11 +70,19 @@ update dt character =
     --             |> Vector2.add (Vector2.scale (dt * 0.1) character.acceleration)
     -- }
     --     |> constrainPosition
-    if targetDist > 0.5 then
-        { character
-            | velocity = Vector2.add character.velocity character.acceleration
-            , position = Vector2.add character.position (Vector2.scale dt character.velocity)
-        }
+    if targetDist > 1.5 then
+        case target of
+            Nothing ->
+                { character
+                    | velocity = Vector2.add character.velocity character.acceleration
+                    , position = Vector2.add character.position (Vector2.scale dt character.velocity)
+                }
+
+            Just t ->
+                { character
+                    | velocity = Vector2.direction character.position t |> Vector2.scale character.movementSpeedModifier
+                    , position = Vector2.add character.position (Vector2.scale dt character.velocity)
+                }
 
     else
         { character | velocity = Vector2.setMagnitude 0 character.velocity, state = Idle }

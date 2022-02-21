@@ -7,7 +7,7 @@ import Component exposing (Component, getCharacter, getPhysics)
 import Components.Character exposing (CharacterState(..))
 import Components.Physics
 import Components.Vector2
-import Content.Characters exposing (panda)
+import Content.Characters exposing (dog, mouse, panda)
 import Ecs
 import GameData exposing (GameScene)
 import Html exposing (Html, button, div, h3, input, p)
@@ -40,8 +40,9 @@ type alias Model =
 initScene : GameScene
 initScene =
     Ecs.emptyScene 10
-        |> Ecs.addEntity [ panda ( 0, 0 ) ]
+        |> Ecs.addEntity [ mouse ( 0, 0 ) ]
         |> Ecs.addEntity [ panda ( -10, 20 ) ]
+        |> Ecs.addEntity [ dog ( -10, 10 ) ]
         |> Ecs.addSystem movementSystem
 
 
@@ -162,10 +163,10 @@ viewCharacter debug character =
                             , Svg.Attributes.y2 "0"
                             , Svg.Attributes.x1 (String.fromFloat (trgt.x - c.position.x))
                             , Svg.Attributes.y1 (String.fromFloat (trgt.y - c.position.y))
-                            , Svg.Attributes.stroke "orange"
-                            , Svg.Attributes.strokeWidth "10"
+                            , Svg.Attributes.stroke "rgba(255, 255, 255, 0.5)"
+                            , Svg.Attributes.strokeWidth "5"
                             , Svg.Attributes.strokeLinecap "round"
-                            , Svg.Attributes.strokeDasharray "0.7, 30"
+                            , Svg.Attributes.strokeDasharray "0.35, 20"
                             ]
                             []
                         , Svg.circle
@@ -194,8 +195,8 @@ viewCharacter debug character =
                       else
                         [ Svg.Attributes.class "player" ]
                      )
-                        ++ [ Svg.Attributes.y "10"
-                           , Svg.Attributes.fontSize "2rem"
+                        ++ [ Svg.Attributes.y "15"
+                           , Svg.Attributes.fontSize "3rem"
                            , Svg.Attributes.textAnchor "middle"
                            ]
                     )
@@ -282,92 +283,85 @@ viewCharacterWrapper debug ( entity, components ) =
             Nothing
 
 
-viewParticleWrapper : Bool -> ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg msg)
-viewParticleWrapper debug ( entity, components ) =
-    case List.filterMap getPhysics (List.map Tuple.second components) |> List.head of
-        Just phys ->
-            Just (viewParticle debug phys)
 
-        _ ->
-            Nothing
-
-
-viewParticle : Bool -> Components.Physics.Physics -> Svg msg
-viewParticle debug character =
-    let
-        viewVectors c =
-            if debug then
-                let
-                    vel =
-                        Components.Vector2.scale 3 c.velocity
-
-                    acc =
-                        Components.Vector2.scale 5 c.acceleration
-                in
-                [ g []
-                    -- <line x1="0" y1="80" x2="100" y2="20" stroke="black" />
-                    [ Svg.line
-                        [ Svg.Attributes.x1 "0"
-                        , Svg.Attributes.y1 "0"
-                        , Svg.Attributes.x2 (String.fromFloat vel.x)
-                        , Svg.Attributes.y2 (String.fromFloat vel.y)
-                        , Svg.Attributes.stroke "yellow"
-                        , Svg.Attributes.strokeWidth "0.1"
-                        , Svg.Attributes.strokeLinecap "round"
-                        ]
-                        []
-                    , Svg.line
-                        [ Svg.Attributes.x1 "0"
-                        , Svg.Attributes.y1 "0"
-                        , Svg.Attributes.x2 (String.fromFloat acc.x)
-                        , Svg.Attributes.y2 (String.fromFloat acc.y)
-                        , Svg.Attributes.stroke "red"
-                        , Svg.Attributes.strokeWidth "0.1"
-                        , Svg.Attributes.strokeLinecap "round"
-                        ]
-                        []
-                    ]
-                ]
-
-            else
-                []
-    in
-    g
-        [ Svg.Attributes.style
-            ("transform: translate("
-                ++ String.fromFloat character.position.x
-                ++ "px, "
-                ++ String.fromFloat character.position.y
-                ++ "px) scale("
-                ++ String.fromFloat (Components.Physics.getRadius character)
-                ++ "); user-select: none;"
-            )
-        , Svg.Attributes.class "character"
-        ]
-        (Svg.circle
-            [ Svg.Attributes.cx "0"
-            , Svg.Attributes.cy "0"
-            , Svg.Attributes.r "1"
-            , Svg.Attributes.class "particle"
-            ]
-            []
-            :: viewVectors character
-        )
-
-
-viewGameArea : Svg msg
-viewGameArea =
-    Svg.rect
-        [ Svg.Attributes.x "-50"
-        , Svg.Attributes.y "-50"
-        , Svg.Attributes.width "100"
-        , Svg.Attributes.height "100"
-
-        -- , Svg.Attributes.stroke "magenta"
-        -- , Svg.Attributes.strokeWidth "0.5"
-        , Svg.Attributes.fill "#262626"
-        ]
-        []
+-- viewParticleWrapper : Bool -> ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg msg)
+-- viewParticleWrapper debug ( entity, components ) =
+--     case List.filterMap getPhysics (List.map Tuple.second components) |> List.head of
+--         Just phys ->
+--             Just (viewParticle debug phys)
+--         _ ->
+--             Nothing
+-- viewParticle : Bool -> Components.Physics.Physics -> Svg msg
+-- viewParticle debug character =
+--     let
+--         viewVectors c =
+--             if debug then
+--                 let
+--                     vel =
+--                         Components.Vector2.scale 3 c.velocity
+--                     acc =
+--                         Components.Vector2.scale 5 c.acceleration
+--                 in
+--                 [ g []
+--                     -- <line x1="0" y1="80" x2="100" y2="20" stroke="black" />
+--                     [ Svg.line
+--                         [ Svg.Attributes.x1 "0"
+--                         , Svg.Attributes.y1 "0"
+--                         , Svg.Attributes.x2 (String.fromFloat vel.x)
+--                         , Svg.Attributes.y2 (String.fromFloat vel.y)
+--                         , Svg.Attributes.stroke "yellow"
+--                         , Svg.Attributes.strokeWidth "0.1"
+--                         , Svg.Attributes.strokeLinecap "round"
+--                         ]
+--                         []
+--                     , Svg.line
+--                         [ Svg.Attributes.x1 "0"
+--                         , Svg.Attributes.y1 "0"
+--                         , Svg.Attributes.x2 (String.fromFloat acc.x)
+--                         , Svg.Attributes.y2 (String.fromFloat acc.y)
+--                         , Svg.Attributes.stroke "red"
+--                         , Svg.Attributes.strokeWidth "0.1"
+--                         , Svg.Attributes.strokeLinecap "round"
+--                         ]
+--                         []
+--                     ]
+--                 ]
+--             else
+--                 []
+--     in
+--     g
+--         [ Svg.Attributes.style
+--             ("transform: translate("
+--                 ++ String.fromFloat character.position.x
+--                 ++ "px, "
+--                 ++ String.fromFloat character.position.y
+--                 ++ "px) scale("
+--                 ++ String.fromFloat (Components.Physics.getRadius character)
+--                 ++ "); user-select: none;"
+--             )
+--         , Svg.Attributes.class "character"
+--         ]
+--         (Svg.circle
+--             [ Svg.Attributes.cx "0"
+--             , Svg.Attributes.cy "0"
+--             , Svg.Attributes.r "1"
+--             , Svg.Attributes.class "particle"
+--             ]
+--             []
+--             :: viewVectors character
+--         )
+-- viewGameArea : Svg msg
+-- viewGameArea =
+--     Svg.rect
+--         [ Svg.Attributes.x "-50"
+--         , Svg.Attributes.y "-50"
+--         , Svg.Attributes.width "100"
+--         , Svg.Attributes.height "100"
+--         -- , Svg.Attributes.stroke "magenta"
+--         -- , Svg.Attributes.strokeWidth "0.5"
+--         , Svg.Attributes.fill "#262626"
+--         ]
+--         []
 
 
 blobGradient : Svg msg
