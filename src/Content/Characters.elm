@@ -6,7 +6,7 @@ import Components.Character exposing (Character)
 
 panda : ( Float, Float ) -> Component
 panda ( x, y ) =
-    Component.characterComponent (Components.Character.newCharacter ( x, y ) True 4 0.009 (Just "🐼"))
+    Component.characterComponent (Components.Character.newCharacter ( x, y ) True 20 0.009 (Just "🐼"))
 
 
 dog : ( Float, Float ) -> Character

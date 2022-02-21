@@ -40,9 +40,6 @@ distanceBetween c1 c2 =
 update : Float -> Character -> Character
 update dt character =
     let
-        friction =
-            1 - (dt * 0.005)
-
         targetDist =
             case character.state of
                 Idle ->
@@ -235,7 +232,7 @@ collision : List Character -> Character -> Character
 collision chars char =
     List.foldl
         (\c1 c2 ->
-            if c1.player /= c2.player && c1 /= c2 then
+            if c1 /= c2 then
                 -- only check collision betweeen enemies, ignore self
                 if isColliding c1 c2 then
                     let
@@ -253,7 +250,7 @@ collision chars char =
 
                         -- , radius = c2.radius - 0.05
                     }
-                        |> applyForce (Vector2.scale (c1.radius * 0.7) shift)
+                    -- |> applyForce (Vector2.scale (c1.radius * 0.7) shift)
 
                 else
                     c2

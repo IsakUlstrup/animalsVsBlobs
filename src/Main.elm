@@ -8,7 +8,6 @@ import Components.Character exposing (CharacterState(..))
 import Components.Physics
 import Components.Vector2
 import Content.Characters exposing (panda)
-import Content.Particles
 import Ecs
 import GameData exposing (GameScene)
 import Html exposing (Html, button, div, h3, input, p)
@@ -19,7 +18,6 @@ import Svg exposing (Attribute, Svg, g, svg, text, text_)
 import Svg.Attributes exposing (class, id, viewBox)
 import Svg.Events
 import Systems.MovementSystem exposing (movementSystem)
-import Systems.PhysicsSystem exposing (physicsSystem)
 import Task
 
 
@@ -43,7 +41,7 @@ initScene : GameScene
 initScene =
     Ecs.emptyScene 10
         |> Ecs.addEntity [ panda ( 0, 0 ) ]
-        -- |> Ecs.addEntity [ panda ( -10, 20 ) ]
+        |> Ecs.addEntity [ panda ( -10, 20 ) ]
         |> Ecs.addSystem movementSystem
 
 
@@ -80,7 +78,6 @@ type Msg
     | SetRenderDebug Bool
     | MouseMove ( Int, Int )
     | SvgClick ( Float, Float )
-    | SvgResize
     | GotElement (Result Error Element)
 
 
@@ -127,25 +124,10 @@ update msg model =
             , Cmd.none
             )
 
-        SvgResize ->
-            let
-                _ =
-                    "x" |> Debug.log "resize"
-            in
-            ( model, Cmd.none )
-
-        GotElement (Err err) ->
-            let
-                _ =
-                    err |> Debug.log "err"
-            in
+        GotElement (Err _) ->
             ( model, Cmd.none )
 
         GotElement (Ok element) ->
-            let
-                _ =
-                    element.element |> Debug.log "success"
-            in
             ( { model | viewPort = { x = element.element.width, y = element.element.height } }, Cmd.none )
 
 
@@ -211,7 +193,7 @@ viewCharacter debug character =
                       else
                         [ Svg.Attributes.class "player" ]
                      )
-                        ++ [ Svg.Attributes.y "4"
+                        ++ [ Svg.Attributes.y "10"
                            , Svg.Attributes.fontSize "2rem"
                            , Svg.Attributes.textAnchor "middle"
                            ]
@@ -244,7 +226,7 @@ viewCharacter debug character =
                     [ Svg.circle
                         [ Svg.Attributes.cx "0"
                         , Svg.Attributes.cy "0"
-                        , Svg.Attributes.r "10"
+                        , Svg.Attributes.r (String.fromFloat c.radius)
                         , Svg.Attributes.stroke "cyan"
                         , Svg.Attributes.strokeWidth "1"
                         , Svg.Attributes.fill "none"
@@ -286,7 +268,7 @@ viewCharacter debug character =
             )
         , Svg.Attributes.class "character"
         ]
-        (char character :: viewVectors character ++ playerPath character)
+        (playerPath character ++ (char character :: viewVectors character))
 
 
 viewCharacterWrapper : Bool -> ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg msg)
@@ -407,19 +389,6 @@ onClick =
     Svg.Events.on "click" point
 
 
-size : Decode.Decoder Msg
-size =
-    -- Decode.map2 (\x y -> SvgResize ( x, y ))
-    --     (Decode.field "innerHeight" Decode.float)
-    --     (Decode.field "innerWidth" Decode.float)
-    Decode.succeed SvgResize
-
-
-onResize : Attribute Msg
-onResize =
-    Svg.Events.on "resize" size
-
-
 viewBoxString : ( Float, Float ) -> String
 viewBoxString ( x, y ) =
     [ x - x * 1.5, y - y * 1.5, x, y ] |> List.map String.fromFloat |> List.intersperse " " |> String.concat
@@ -459,7 +428,7 @@ view model =
             ]
         , div [ id "game-container" ]
             [ svg
-                [ viewBox (viewBoxString ( model.viewPort.x, model.viewPort.y )), onClick, onResize, Svg.Attributes.id "game-svg" ]
+                [ viewBox (viewBoxString ( model.viewPort.x, model.viewPort.y )), onClick, Svg.Attributes.id "game-svg" ]
                 (blobGradient
                     :: (Ecs.mapComponentGroups (viewCharacterWrapper model.renderDebug) model.scene
                             |> List.filterMap identity
