@@ -96,8 +96,9 @@
   transform-origin: 0 2px;
 }
 
-/* .player {
-} */
+.player {
+    pointer-events: none;
+}
 
 .particle {
   fill: white;

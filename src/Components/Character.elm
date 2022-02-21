@@ -238,11 +238,7 @@ collision chars char =
                     let
                         shift =
                             Vector2.subtract c2.position c1.position
-                                |> Vector2.scale
-                                    (Vector2.distance c1.position c2.position
-                                        - (c1.radius + c2.radius)
-                                        |> abs
-                                    )
+                                |> Vector2.scale 0.01
                     in
                     -- resolve collision
                     { c2
