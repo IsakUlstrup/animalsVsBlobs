@@ -256,7 +256,7 @@ collision chars char =
                 if isColliding c1 c2 then
                     let
                         d =
-                            Vector2.distance c1.position c2.position - (c1.radius + c2.radius) |> Debug.log "d"
+                            Vector2.distance c1.position c2.position - (c1.radius + c2.radius)
 
                         shift =
                             Vector2.subtract c2.position c1.position
