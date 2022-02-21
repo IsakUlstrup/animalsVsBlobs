@@ -255,9 +255,13 @@ collision chars char =
                 -- only check collision betweeen enemies, ignore self
                 if isColliding c1 c2 then
                     let
+                        d =
+                            Vector2.distance c1.position c2.position - (c1.radius + c2.radius) |> Debug.log "d"
+
                         shift =
                             Vector2.subtract c2.position c1.position
                                 |> Vector2.scale 0.01
+                                |> Vector2.scale (d * -1)
                     in
                     -- resolve collision
                     { c2
