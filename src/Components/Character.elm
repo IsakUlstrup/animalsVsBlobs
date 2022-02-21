@@ -3,6 +3,12 @@ module Components.Character exposing (..)
 import Components.Vector2 as Vector2 exposing (Vector2, direction, new)
 
 
+type CharacterState
+    = Idle
+    | AiMove Vector2
+    | ManualMove Vector2
+
+
 type alias Character =
     { position : Vector2
     , velocity : Vector2
@@ -12,17 +18,18 @@ type alias Character =
     , movementSpeedModifier : Float
     , appearance : Maybe String
     , aggressive : Bool
+    , state : CharacterState
     }
 
 
 newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
 newCharacter ( x, y ) player size speed app =
-    Character (new x y) (new 0 0) (new 0 0) player size speed app True
+    Character (new x y) (new 0 0) (new 0 0) player size speed app True Idle
 
 
 newPassiveCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
 newPassiveCharacter ( x, y ) player size speed app =
-    Character (new x y) (new 0 0) (new 0 0) player size speed app False
+    Character (new x y) (new 0 0) (new 0 0) player size speed app False Idle
 
 
 distanceBetween : Character -> Character -> Float
@@ -35,15 +42,34 @@ update dt character =
     let
         friction =
             1 - (dt * 0.005)
+
+        targetDist =
+            case character.state of
+                Idle ->
+                    0
+
+                AiMove trgt ->
+                    Vector2.distance character.position trgt
+
+                ManualMove trgt ->
+                    Vector2.distance character.position trgt
     in
-    { character
-        | acceleration = Vector2.scale friction character.acceleration
-        , position =
-            character.position
-                |> Vector2.add (Vector2.scale (dt * character.movementSpeedModifier) character.velocity)
-                |> Vector2.add (Vector2.scale (dt * 0.1) character.acceleration)
-    }
-        |> constrainPosition
+    -- { character
+    --     | acceleration = Vector2.scale friction character.acceleration
+    --     , position =
+    --         character.position
+    --             |> Vector2.add (Vector2.scale (dt * character.movementSpeedModifier) character.velocity)
+    --             |> Vector2.add (Vector2.scale (dt * 0.1) character.acceleration)
+    -- }
+    --     |> constrainPosition
+    if targetDist > 0.5 then
+        { character
+            | velocity = Vector2.add character.velocity character.acceleration
+            , position = Vector2.add character.position (Vector2.scale dt character.velocity)
+        }
+
+    else
+        { character | velocity = Vector2.setMagnitude 0 character.velocity, state = Idle }
 
 
 constrainLeft : Character -> Character
@@ -126,6 +152,11 @@ constrainPosition character =
 setMoveTarget : Character -> Character -> Character
 setMoveTarget target character =
     { character | velocity = direction character.position target.position }
+
+
+setMoveTargetVector : Vector2 -> Character -> Character
+setMoveTargetVector target character =
+    { character | velocity = direction character.position target, state = ManualMove target }
 
 
 applyForce : Vector2 -> Character -> Character

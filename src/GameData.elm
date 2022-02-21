@@ -2,6 +2,7 @@ module GameData exposing (GameMsg(..), GameScene, GameSystem)
 
 import Component exposing (Component)
 import Components.Skill exposing (SkillEffect)
+import Components.Vector2 exposing (Vector2)
 import Ecs exposing (EcsId)
 
 
@@ -19,3 +20,4 @@ type GameMsg
     | UseSkill ( EcsId, Int ) ( EcsId, SkillEffect )
     | SetSkillTarget EcsId
     | MousePosition ( Float, Float )
+    | MoveTo Vector2

@@ -17,6 +17,12 @@ windForce =
     Vector2.new 0.05 0
 
 
+collision : List Physics -> Physics -> Physics
+collision ps physics =
+    physics
+        |> Components.Physics.applyImpulses (Components.Physics.collisionImpulse ps physics)
+
+
 update : Float -> List Physics -> Physics -> Physics
 update dt ps physics =
     physics
@@ -37,6 +43,7 @@ physicsSystem msg scene =
                     Ecs.mapComponents (\_ c -> Component.getPhysics c) scene |> List.filterMap identity
             in
             scene
+                |> Ecs.updateComponents (Component.updatePhysics (collision physicsObjects))
                 |> Ecs.updateComponents (Component.updatePhysics (update dt physicsObjects))
 
         _ ->

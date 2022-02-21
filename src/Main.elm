@@ -1,11 +1,13 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Dom exposing (Element, Error)
 import Browser.Events
 import Component exposing (Component, getCharacter, getPhysics)
-import Components.Character
+import Components.Character exposing (CharacterState(..))
 import Components.Physics
 import Components.Vector2
+import Content.Characters exposing (panda)
 import Content.Particles
 import Ecs
 import GameData exposing (GameScene)
@@ -13,9 +15,12 @@ import Html exposing (Html, button, div, h3, input, p)
 import Html.Attributes
 import Html.Events
 import Json.Decode as Decode
-import Svg exposing (Svg, g, svg, text, text_)
+import Svg exposing (Attribute, Svg, g, svg, text, text_)
 import Svg.Attributes exposing (class, id, viewBox)
+import Svg.Events
+import Systems.MovementSystem exposing (movementSystem)
 import Systems.PhysicsSystem exposing (physicsSystem)
+import Task
 
 
 
@@ -30,23 +35,16 @@ type alias Model =
     , renderDebug : Bool
     , deltaCap : Float
     , mousePos : ( Int, Int )
+    , viewPort : { x : Float, y : Float }
     }
 
 
 initScene : GameScene
 initScene =
     Ecs.emptyScene 10
-        |> Ecs.addEntity (Content.Particles.particle ( -30, 0 ) ( 2, 0 ))
-        |> Ecs.addEntity (Content.Particles.particle ( -20, 0 ) ( 0.001, 0 ))
-        |> Ecs.addEntity (Content.Particles.particle ( 10, 0 ) ( 0.001, 0 ))
-        |> Ecs.addEntity (Content.Particles.particle ( 20, 0 ) ( -0.5, -0.5 ))
-        |> Ecs.addEntity (Content.Particles.particle ( 30, -35 ) ( 0.3, 0 ))
-        |> Ecs.addEntity (Content.Particles.particle ( 10, 3 ) ( -0.5, -1 ))
-        |> Ecs.addEntity (Content.Particles.particle ( 13, 9 ) ( -0.5, -0.7 ))
-        |> Ecs.addEntity (Content.Particles.advancedParticle ( 17, -9 ) ( -0.2, -0.3 ) 6 3)
-        -- |> Ecs.addEntity (Content.Particles.advancedParticle ( 0, 0 ) ( 0, 0 ) 50 10)
-        |> Ecs.addEntity (Content.Particles.advancedParticle ( 0, 0 ) ( 0, 0 ) 30 5)
-        |> Ecs.addSystem physicsSystem
+        |> Ecs.addEntity [ panda ( 0, 0 ) ]
+        -- |> Ecs.addEntity [ panda ( -10, 20 ) ]
+        |> Ecs.addSystem movementSystem
 
 
 init : ( Model, Cmd Msg )
@@ -59,7 +57,8 @@ init =
         True
         100
         ( 0, 0 )
-    , Cmd.none
+        { x = 0, y = 0 }
+    , Browser.Dom.getElement "game-svg" |> Task.attempt GotElement
     )
 
 
@@ -80,6 +79,9 @@ type Msg
     | SetSpeedModifier Float
     | SetRenderDebug Bool
     | MouseMove ( Int, Int )
+    | SvgClick ( Float, Float )
+    | SvgResize
+    | GotElement (Result Error Element)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -91,7 +93,7 @@ update msg model =
                     model.scene
                         |> Ecs.runSystems (GameData.GameTick (min model.deltaCap dt * 0.03 * model.speedModifier))
               }
-            , Cmd.none
+            , Browser.Dom.getElement "game-svg" |> Task.attempt GotElement
             )
 
         Reset ->
@@ -109,6 +111,42 @@ update msg model =
               }
             , Cmd.none
             )
+
+        SvgClick ( x, y ) ->
+            let
+                ( rx, ry ) =
+                    ( x - (model.viewPort.x / 2)
+                    , y - (model.viewPort.y / 2)
+                    )
+            in
+            ( { model
+                | scene =
+                    model.scene
+                        |> Ecs.runSystems (GameData.MoveTo (Components.Vector2.new rx ry))
+              }
+            , Cmd.none
+            )
+
+        SvgResize ->
+            let
+                _ =
+                    "x" |> Debug.log "resize"
+            in
+            ( model, Cmd.none )
+
+        GotElement (Err err) ->
+            let
+                _ =
+                    err |> Debug.log "err"
+            in
+            ( model, Cmd.none )
+
+        GotElement (Ok element) ->
+            let
+                _ =
+                    element.element |> Debug.log "success"
+            in
+            ( { model | viewPort = { x = element.element.width, y = element.element.height } }, Cmd.none )
 
 
 
@@ -133,14 +171,51 @@ viewCharacter debug character =
                 _ ->
                     ""
 
+        playerPath c =
+            if c.player then
+                case c.state of
+                    ManualMove trgt ->
+                        [ Svg.line
+                            [ Svg.Attributes.x1 "0"
+                            , Svg.Attributes.y1 "0"
+                            , Svg.Attributes.x2 (String.fromFloat (trgt.x - c.position.x))
+                            , Svg.Attributes.y2 (String.fromFloat (trgt.y - c.position.y))
+                            , Svg.Attributes.stroke "orange"
+                            , Svg.Attributes.strokeWidth "1"
+                            , Svg.Attributes.strokeLinecap "round"
+                            ]
+                            []
+                        , Svg.circle
+                            [ Svg.Attributes.cx (String.fromFloat (trgt.x - c.position.x))
+                            , Svg.Attributes.cy (String.fromFloat (trgt.y - c.position.y))
+                            , Svg.Attributes.r "0.4"
+                            , Svg.Attributes.stroke "white"
+                            , Svg.Attributes.strokeWidth "1"
+                            , Svg.Attributes.fill "none"
+                            ]
+                            []
+                        ]
+
+                    _ ->
+                        []
+
+            else
+                []
+
         char c =
             if c.player then
                 text_
-                    [ Svg.Attributes.y "0.75"
-                    , Svg.Attributes.fontSize "0.14rem"
-                    , Svg.Attributes.textAnchor "middle"
-                    , Svg.Attributes.class "player"
-                    ]
+                    ((if c.state /= Idle then
+                        [ Svg.Attributes.class "walk-animation", Svg.Attributes.class "player" ]
+
+                      else
+                        [ Svg.Attributes.class "player" ]
+                     )
+                        ++ [ Svg.Attributes.y "4"
+                           , Svg.Attributes.fontSize "2rem"
+                           , Svg.Attributes.textAnchor "middle"
+                           ]
+                    )
                     [ text (textLabel character) ]
 
             else
@@ -159,19 +234,19 @@ viewCharacter debug character =
             if debug then
                 let
                     vel =
-                        Components.Vector2.scale 2 c.velocity
+                        Components.Vector2.scale 50 c.velocity
 
                     acc =
-                        Components.Vector2.scale 2 c.acceleration
+                        Components.Vector2.scale 50 c.acceleration
                 in
                 [ g []
                     -- <line x1="0" y1="80" x2="100" y2="20" stroke="black" />
                     [ Svg.circle
                         [ Svg.Attributes.cx "0"
                         , Svg.Attributes.cy "0"
-                        , Svg.Attributes.r "1"
+                        , Svg.Attributes.r "10"
                         , Svg.Attributes.stroke "cyan"
-                        , Svg.Attributes.strokeWidth "0.1"
+                        , Svg.Attributes.strokeWidth "1"
                         , Svg.Attributes.fill "none"
                         ]
                         []
@@ -181,7 +256,7 @@ viewCharacter debug character =
                         , Svg.Attributes.x2 (String.fromFloat vel.x)
                         , Svg.Attributes.y2 (String.fromFloat vel.y)
                         , Svg.Attributes.stroke "yellow"
-                        , Svg.Attributes.strokeWidth "0.1"
+                        , Svg.Attributes.strokeWidth "2"
                         , Svg.Attributes.strokeLinecap "round"
                         ]
                         []
@@ -191,7 +266,7 @@ viewCharacter debug character =
                         , Svg.Attributes.x2 (String.fromFloat acc.x)
                         , Svg.Attributes.y2 (String.fromFloat acc.y)
                         , Svg.Attributes.stroke "red"
-                        , Svg.Attributes.strokeWidth "0.1"
+                        , Svg.Attributes.strokeWidth "2"
                         , Svg.Attributes.strokeLinecap "round"
                         ]
                         []
@@ -207,13 +282,11 @@ viewCharacter debug character =
                 ++ String.fromFloat character.position.x
                 ++ "px, "
                 ++ String.fromFloat character.position.y
-                ++ "px) scale("
-                ++ String.fromFloat character.radius
-                ++ "); user-select: none;"
+                ++ "px)"
             )
         , Svg.Attributes.class "character"
         ]
-        (char character :: viewVectors character)
+        (char character :: viewVectors character ++ playerPath character)
 
 
 viewCharacterWrapper : Bool -> ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg msg)
@@ -322,6 +395,36 @@ blobGradient =
         ]
 
 
+point : Decode.Decoder Msg
+point =
+    Decode.map2 (\x y -> SvgClick ( x, y ))
+        (Decode.field "offsetX" Decode.float)
+        (Decode.field "offsetY" Decode.float)
+
+
+onClick : Attribute Msg
+onClick =
+    Svg.Events.on "click" point
+
+
+size : Decode.Decoder Msg
+size =
+    -- Decode.map2 (\x y -> SvgResize ( x, y ))
+    --     (Decode.field "innerHeight" Decode.float)
+    --     (Decode.field "innerWidth" Decode.float)
+    Decode.succeed SvgResize
+
+
+onResize : Attribute Msg
+onResize =
+    Svg.Events.on "resize" size
+
+
+viewBoxString : ( Float, Float ) -> String
+viewBoxString ( x, y ) =
+    [ x - x * 1.5, y - y * 1.5, x, y ] |> List.map String.fromFloat |> List.intersperse " " |> String.concat
+
+
 view : Model -> Html Msg
 view model =
     div [ id "app" ]
@@ -356,10 +459,9 @@ view model =
             ]
         , div [ id "game-container" ]
             [ svg
-                [ viewBox "-50 -50 100 100" ]
-                (viewGameArea
-                    :: blobGradient
-                    :: (Ecs.mapComponentGroups (viewParticleWrapper model.renderDebug) model.scene
+                [ viewBox (viewBoxString ( model.viewPort.x, model.viewPort.y )), onClick, onResize, Svg.Attributes.id "game-svg" ]
+                (blobGradient
+                    :: (Ecs.mapComponentGroups (viewCharacterWrapper model.renderDebug) model.scene
                             |> List.filterMap identity
                        )
                 )

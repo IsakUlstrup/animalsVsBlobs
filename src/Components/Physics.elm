@@ -99,12 +99,7 @@ applyForces forces physics =
 
 applyImpulses : List Vector2 -> Physics -> Physics
 applyImpulses impulses phys =
-    case impulses of
-        [] ->
-            phys
-
-        is ->
-            { phys | velocity = Vector2.add phys.velocity (List.foldl Vector2.add (Vector2.new 0 0) is) }
+    { phys | velocity = List.foldl Vector2.add phys.velocity impulses }
 
 
 constrainY : Float -> Float -> Float -> Physics -> Physics
@@ -228,9 +223,9 @@ collisionImpulse chars char =
                             -(1 + e) * Vector2.dot vrel normal / ((1 / char.mass) + (1 / c1.mass))
 
                         jn =
-                            Vector2.setMagnitude impulseMagnitude normal :: sum
+                            Vector2.setMagnitude impulseMagnitude normal |> Vector2.divide char.mass
                     in
-                    jn
+                    jn :: sum
 
                 else
                     sum

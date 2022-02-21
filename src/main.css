@@ -91,10 +91,13 @@
   animation: blob-walk 0.5s infinite;
 }
 
-.player {
+.walk-animation {
   animation: player-walk 0.4s infinite;
   transform-origin: 0 2px;
 }
+
+/* .player {
+} */
 
 .particle {
   fill: white;
