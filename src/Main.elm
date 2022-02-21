@@ -158,13 +158,14 @@ viewCharacter debug character =
                 case c.state of
                     ManualMove trgt ->
                         [ Svg.line
-                            [ Svg.Attributes.x1 "0"
-                            , Svg.Attributes.y1 "0"
-                            , Svg.Attributes.x2 (String.fromFloat (trgt.x - c.position.x))
-                            , Svg.Attributes.y2 (String.fromFloat (trgt.y - c.position.y))
+                            [ Svg.Attributes.x2 "0"
+                            , Svg.Attributes.y2 "0"
+                            , Svg.Attributes.x1 (String.fromFloat (trgt.x - c.position.x))
+                            , Svg.Attributes.y1 (String.fromFloat (trgt.y - c.position.y))
                             , Svg.Attributes.stroke "orange"
-                            , Svg.Attributes.strokeWidth "1"
+                            , Svg.Attributes.strokeWidth "10"
                             , Svg.Attributes.strokeLinecap "round"
+                            , Svg.Attributes.strokeDasharray "0.7, 30"
                             ]
                             []
                         , Svg.circle
