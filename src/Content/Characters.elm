@@ -6,17 +6,17 @@ import Components.Character
 
 panda : ( Float, Float ) -> List Component
 panda ( x, y ) =
-    [ Component.characterComponent (Components.Character.newPassiveCharacter ( x, y ) True 20 1 (Just "🐼")) ]
+    [ Component.characterComponent (Components.Character.newPassiveCharacter ( x, y ) True 20 0.7 (Just "🐼")) ]
 
 
 dog : ( Float, Float ) -> List Component
 dog ( x, y ) =
-    [ Component.characterComponent (Components.Character.newPassiveCharacter ( x, y ) True 17 1.6 (Just "🐶")) ]
+    [ Component.characterComponent (Components.Character.newPassiveCharacter ( x, y ) True 17 0.9 (Just "🐶")) ]
 
 
 mouse : ( Float, Float ) -> List Component
 mouse ( x, y ) =
-    [ Component.characterComponent (Components.Character.newPassiveCharacter ( x, y ) True 15 2 (Just "🐭")) ]
+    [ Component.characterComponent (Components.Character.newPassiveCharacter ( x, y ) True 15 1.5 (Just "🐭")) ]
 
 
 
@@ -30,4 +30,4 @@ mouse ( x, y ) =
 
 blob : ( Float, Float ) -> List Component
 blob ( x, y ) =
-    [ Component.characterComponent (Components.Character.newCharacter ( x, y ) False 20 0.3 Nothing) ]
+    [ Component.characterComponent (Components.Character.newCharacter ( x, y ) False 20 0.1 Nothing) ]

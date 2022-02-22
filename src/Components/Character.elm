@@ -47,12 +47,7 @@ aiForce target character =
         { character | state = Idle }
 
     else
-        character
-            |> applyForce
-                (Vector2.direction character.position target
-                    |> Vector2.scale (targetDist * 0.001)
-                    |> Vector2.scale character.movementSpeedModifier
-                )
+        character |> applyForce (Vector2.direction character.position target)
 
 
 {-| apply forces based on character target
@@ -74,11 +69,14 @@ aiUpdate character =
 -}
 update : Float -> Character -> Character
 update dt character =
+    let
+        friction =
+            1 - (dt * 0.095)
+    in
     { character
         | velocity =
             Vector2.add character.velocity (Vector2.scale dt character.acceleration)
-                -- |> Vector2.limitMagnitude character.movementSpeedModifier
-                |> Vector2.scale 0.97
+                |> Vector2.scale friction
         , position = Vector2.add character.position (Vector2.scale dt character.velocity)
         , acceleration = Vector2.setMagnitude 0 character.acceleration
     }
@@ -104,7 +102,7 @@ setMoveTargetVector target character =
 
 applyForce : Vector2 -> Character -> Character
 applyForce force character =
-    { character | acceleration = Vector2.add character.acceleration force }
+    { character | acceleration = Vector2.add character.acceleration (Vector2.scale character.movementSpeedModifier force) }
 
 
 closestEnemy : Character -> List Character -> Maybe Character
@@ -168,7 +166,7 @@ aiMove characters char =
 
             else
                 -- keepEnemyDistance 500 characters char
-                case keepEnemyDistance 100 characters char of
+                case keepEnemyDistance 200 characters char of
                     Just t ->
                         { char | state = AiMove t }
 
@@ -198,7 +196,7 @@ collision chars char =
 
                     shift =
                         Vector2.subtract c2.position c1.position
-                            |> Vector2.scale 0.001
+                            |> Vector2.scale 0.01
                             |> Vector2.scale (d * -1)
                 in
                 c2
