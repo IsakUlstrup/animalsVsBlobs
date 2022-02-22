@@ -75,7 +75,7 @@ aiUpdate character =
 update : Float -> Character -> Character
 update dt character =
     { character
-        | velocity = Vector2.add character.velocity character.acceleration |> Vector2.scale 0.98
+        | velocity = Vector2.add character.velocity character.acceleration |> Vector2.scale 0.98 |> Vector2.limitMagnitude character.movementSpeedModifier
         , position = Vector2.add character.position (Vector2.scale dt character.velocity)
         , acceleration = Vector2.setMagnitude 0 character.acceleration
     }
@@ -138,7 +138,7 @@ keepEnemyDistance safeDistance characters char =
                         Vector2.distance char.position target.position
                 in
                 if dist < safeDistance then
-                    Just (Vector2.direction target.position char.position |> Vector2.setMagnitude 100)
+                    Just (Vector2.add char.position (Vector2.direction target.position char.position |> Vector2.setMagnitude 50))
 
                 else
                     Nothing

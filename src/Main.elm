@@ -187,12 +187,12 @@ viewCharacter debug character =
                             []
                         ]
 
-                    AiMove trgt ->
+                    AiMove trgt2 ->
                         [ Svg.line
                             [ Svg.Attributes.x2 "0"
                             , Svg.Attributes.y2 "0"
-                            , Svg.Attributes.x1 (String.fromFloat (trgt.x - c.position.x))
-                            , Svg.Attributes.y1 (String.fromFloat (trgt.y - c.position.y))
+                            , Svg.Attributes.x1 (String.fromFloat (trgt2.x - c.position.x))
+                            , Svg.Attributes.y1 (String.fromFloat (trgt2.y - c.position.y))
                             , Svg.Attributes.stroke "rgba(0, 0, 0, 0.5)"
                             , Svg.Attributes.strokeWidth "5"
                             , Svg.Attributes.strokeLinecap "round"
@@ -200,10 +200,10 @@ viewCharacter debug character =
                             ]
                             []
                         , Svg.circle
-                            [ Svg.Attributes.cx (String.fromFloat (trgt.x - c.position.x))
-                            , Svg.Attributes.cy (String.fromFloat (trgt.y - c.position.y))
-                            , Svg.Attributes.r "0.4"
-                            , Svg.Attributes.stroke "black"
+                            [ Svg.Attributes.cx (String.fromFloat (trgt2.x - c.position.x))
+                            , Svg.Attributes.cy (String.fromFloat (trgt2.y - c.position.y))
+                            , Svg.Attributes.r "4"
+                            , Svg.Attributes.stroke "red"
                             , Svg.Attributes.strokeWidth "1"
                             , Svg.Attributes.fill "none"
                             ]
