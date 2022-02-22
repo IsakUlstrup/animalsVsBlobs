@@ -109,3 +109,17 @@
   stroke: magenta;
   stroke-width: 0.1;
 }
+
+.movement-target {
+  fill: rgb(73, 73, 73);
+  stroke: white;
+  stroke-width: 1;
+}
+
+.movement-target:hover {
+  fill: rgb(112, 0, 0);
+}
+
+.game-background {
+  fill: rgb(116, 12, 116);
+}

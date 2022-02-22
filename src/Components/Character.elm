@@ -43,15 +43,14 @@ aiForce target character =
         targetDist =
             Vector2.distance character.position target
     in
-    if targetDist < 10 then
-        { character | velocity = Vector2.scale 0 character.velocity, state = Idle }
+    if targetDist < 20 then
+        { character | state = Idle }
 
     else
         character
             |> applyForce
                 (Vector2.direction character.position target
                     |> Vector2.scale (targetDist * 0.001)
-                 -- |> Vector2.scale character.movementSpeedModifier
                 )
 
 
@@ -75,7 +74,10 @@ aiUpdate character =
 update : Float -> Character -> Character
 update dt character =
     { character
-        | velocity = Vector2.add character.velocity character.acceleration |> Vector2.scale 0.98 |> Vector2.limitMagnitude character.movementSpeedModifier
+        | velocity =
+            Vector2.add character.velocity character.acceleration
+                |> Vector2.limitMagnitude character.movementSpeedModifier
+                |> Vector2.scale 0.97
         , position = Vector2.add character.position (Vector2.scale dt character.velocity)
         , acceleration = Vector2.setMagnitude 0 character.acceleration
     }
@@ -171,6 +173,11 @@ aiMove characters char =
 
                     Nothing ->
                         { char | state = Idle }
+
+
+setIdle : Character -> Character
+setIdle character =
+    { character | state = Idle }
 
 
 isColliding : Character -> Character -> Bool

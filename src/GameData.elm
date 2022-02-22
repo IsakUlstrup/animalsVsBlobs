@@ -21,3 +21,4 @@ type GameMsg
     | SetSkillTarget EcsId
     | MousePosition ( Float, Float )
     | MoveTo Vector2
+    | CancelMove

@@ -83,6 +83,7 @@ type Msg
     | MouseMove ( Int, Int )
     | SvgClick ( Float, Float )
     | GotElement (Result Error Element)
+    | CancelMove
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -128,6 +129,15 @@ update msg model =
             , Cmd.none
             )
 
+        CancelMove ->
+            ( { model
+                | scene =
+                    model.scene
+                        |> Ecs.runSystems GameData.CancelMove
+              }
+            , Cmd.none
+            )
+
         GotElement (Err _) ->
             ( model, Cmd.none )
 
@@ -143,7 +153,7 @@ update msg model =
 ---- VIEW ----
 
 
-viewCharacter : Bool -> Components.Character.Character -> Svg msg
+viewCharacter : Bool -> Components.Character.Character -> Svg Msg
 viewCharacter debug character =
     let
         fillColor c =
@@ -179,37 +189,39 @@ viewCharacter debug character =
                         , Svg.circle
                             [ Svg.Attributes.cx (String.fromFloat (trgt.x - c.position.x))
                             , Svg.Attributes.cy (String.fromFloat (trgt.y - c.position.y))
-                            , Svg.Attributes.r "0.4"
-                            , Svg.Attributes.stroke "white"
-                            , Svg.Attributes.strokeWidth "1"
-                            , Svg.Attributes.fill "none"
+                            , Svg.Attributes.r "20"
+
+                            -- , Svg.Attributes.stroke "white"
+                            -- , Svg.Attributes.strokeWidth "1"
+                            -- , Svg.Attributes.fill "white"
+                            , Svg.Attributes.class "movement-target"
+                            , Svg.Events.onClick CancelMove
                             ]
                             []
                         ]
 
-                    AiMove trgt2 ->
-                        [ Svg.line
-                            [ Svg.Attributes.x2 "0"
-                            , Svg.Attributes.y2 "0"
-                            , Svg.Attributes.x1 (String.fromFloat (trgt2.x - c.position.x))
-                            , Svg.Attributes.y1 (String.fromFloat (trgt2.y - c.position.y))
-                            , Svg.Attributes.stroke "rgba(0, 0, 0, 0.5)"
-                            , Svg.Attributes.strokeWidth "5"
-                            , Svg.Attributes.strokeLinecap "round"
-                            , Svg.Attributes.strokeDasharray "0.35, 20"
-                            ]
-                            []
-                        , Svg.circle
-                            [ Svg.Attributes.cx (String.fromFloat (trgt2.x - c.position.x))
-                            , Svg.Attributes.cy (String.fromFloat (trgt2.y - c.position.y))
-                            , Svg.Attributes.r "4"
-                            , Svg.Attributes.stroke "red"
-                            , Svg.Attributes.strokeWidth "1"
-                            , Svg.Attributes.fill "none"
-                            ]
-                            []
-                        ]
-
+                    -- AiMove trgt2 ->
+                    --     [ Svg.line
+                    --         [ Svg.Attributes.x2 "0"
+                    --         , Svg.Attributes.y2 "0"
+                    --         , Svg.Attributes.x1 (String.fromFloat (trgt2.x - c.position.x))
+                    --         , Svg.Attributes.y1 (String.fromFloat (trgt2.y - c.position.y))
+                    --         , Svg.Attributes.stroke "rgba(0, 0, 0, 0.5)"
+                    --         , Svg.Attributes.strokeWidth "5"
+                    --         , Svg.Attributes.strokeLinecap "round"
+                    --         , Svg.Attributes.strokeDasharray "0.35, 20"
+                    --         ]
+                    --         []
+                    --     , Svg.circle
+                    --         [ Svg.Attributes.cx (String.fromFloat (trgt2.x - c.position.x))
+                    --         , Svg.Attributes.cy (String.fromFloat (trgt2.y - c.position.y))
+                    --         , Svg.Attributes.r "4"
+                    --         , Svg.Attributes.stroke "red"
+                    --         , Svg.Attributes.strokeWidth "1"
+                    --         , Svg.Attributes.fill "none"
+                    --         ]
+                    --         []
+                    --     ]
                     _ ->
                         []
 
@@ -310,7 +322,7 @@ viewCharacter debug character =
         (playerPath character ++ (char character :: viewVectors character))
 
 
-viewCharacterWrapper : Bool -> ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg msg)
+viewCharacterWrapper : Bool -> ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg Msg)
 viewCharacterWrapper debug ( entity, components ) =
     case List.filterMap getCharacter (List.map Tuple.second components) |> List.head of
         Just char ->
@@ -320,85 +332,17 @@ viewCharacterWrapper debug ( entity, components ) =
             Nothing
 
 
-
--- viewParticleWrapper : Bool -> ( Ecs.Entity, List ( Ecs.EcsId, Component ) ) -> Maybe (Svg msg)
--- viewParticleWrapper debug ( entity, components ) =
---     case List.filterMap getPhysics (List.map Tuple.second components) |> List.head of
---         Just phys ->
---             Just (viewParticle debug phys)
---         _ ->
---             Nothing
--- viewParticle : Bool -> Components.Physics.Physics -> Svg msg
--- viewParticle debug character =
---     let
---         viewVectors c =
---             if debug then
---                 let
---                     vel =
---                         Components.Vector2.scale 3 c.velocity
---                     acc =
---                         Components.Vector2.scale 5 c.acceleration
---                 in
---                 [ g []
---                     -- <line x1="0" y1="80" x2="100" y2="20" stroke="black" />
---                     [ Svg.line
---                         [ Svg.Attributes.x1 "0"
---                         , Svg.Attributes.y1 "0"
---                         , Svg.Attributes.x2 (String.fromFloat vel.x)
---                         , Svg.Attributes.y2 (String.fromFloat vel.y)
---                         , Svg.Attributes.stroke "yellow"
---                         , Svg.Attributes.strokeWidth "0.1"
---                         , Svg.Attributes.strokeLinecap "round"
---                         ]
---                         []
---                     , Svg.line
---                         [ Svg.Attributes.x1 "0"
---                         , Svg.Attributes.y1 "0"
---                         , Svg.Attributes.x2 (String.fromFloat acc.x)
---                         , Svg.Attributes.y2 (String.fromFloat acc.y)
---                         , Svg.Attributes.stroke "red"
---                         , Svg.Attributes.strokeWidth "0.1"
---                         , Svg.Attributes.strokeLinecap "round"
---                         ]
---                         []
---                     ]
---                 ]
---             else
---                 []
---     in
---     g
---         [ Svg.Attributes.style
---             ("transform: translate("
---                 ++ String.fromFloat character.position.x
---                 ++ "px, "
---                 ++ String.fromFloat character.position.y
---                 ++ "px) scale("
---                 ++ String.fromFloat (Components.Physics.getRadius character)
---                 ++ "); user-select: none;"
---             )
---         , Svg.Attributes.class "character"
---         ]
---         (Svg.circle
---             [ Svg.Attributes.cx "0"
---             , Svg.Attributes.cy "0"
---             , Svg.Attributes.r "1"
---             , Svg.Attributes.class "particle"
---             ]
---             []
---             :: viewVectors character
---         )
--- viewGameArea : Svg msg
--- viewGameArea =
---     Svg.rect
---         [ Svg.Attributes.x "-50"
---         , Svg.Attributes.y "-50"
---         , Svg.Attributes.width "100"
---         , Svg.Attributes.height "100"
---         -- , Svg.Attributes.stroke "magenta"
---         -- , Svg.Attributes.strokeWidth "0.5"
---         , Svg.Attributes.fill "#262626"
---         ]
---         []
+viewGameBackground : Float -> Float -> Svg Msg
+viewGameBackground width height =
+    Svg.rect
+        [ Svg.Attributes.width (String.fromFloat width)
+        , Svg.Attributes.height (String.fromFloat height)
+        , Svg.Attributes.x (String.fromFloat (-width / 2))
+        , Svg.Attributes.y (String.fromFloat (-height / 2))
+        , Svg.Attributes.class "game-background"
+        , onClick
+        ]
+        []
 
 
 blobGradient : Svg msg
@@ -460,8 +404,8 @@ view model =
             ]
         , div [ id "game-container" ]
             [ svg
-                [ viewBox (viewBoxString ( model.viewPort.x, model.viewPort.y )), onClick, Svg.Attributes.id "game-svg" ]
-                (blobGradient
+                [ viewBox (viewBoxString ( model.viewPort.x, model.viewPort.y )), Svg.Attributes.id "game-svg" ]
+                (viewGameBackground model.viewPort.x model.viewPort.y
                     :: (Ecs.mapComponentGroups (viewCharacterWrapper model.renderDebug) model.scene
                             |> List.filterMap identity
                        )

@@ -16,6 +16,15 @@ setMoveTarget target character =
         character
 
 
+cancelMove : Character -> Character
+cancelMove character =
+    if character.player then
+        Components.Character.setIdle character
+
+    else
+        character
+
+
 movementSystem : GameMsg -> GameScene -> GameScene
 movementSystem msg scene =
     case msg of
@@ -31,6 +40,10 @@ movementSystem msg scene =
         MoveTo target ->
             scene
                 |> Ecs.updateComponents (Component.updateCharacter (setMoveTarget target))
+
+        CancelMove ->
+            scene
+                |> Ecs.updateComponents (Component.updateCharacter cancelMove)
 
         _ ->
             scene
