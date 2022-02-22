@@ -37,147 +37,71 @@ distanceBetween c1 c2 =
     Vector2.distance c1.position c2.position
 
 
-update : Float -> Character -> Character
-update dt character =
+aiForce : Vector2 -> Character -> Character
+aiForce target character =
     let
         targetDist =
-            case character.state of
-                Idle ->
-                    0
-
-                AiMove trgt ->
-                    Vector2.distance character.position trgt
-
-                ManualMove trgt ->
-                    Vector2.distance character.position trgt
-
-        target =
-            case character.state of
-                Idle ->
-                    Nothing
-
-                AiMove trgt ->
-                    Just trgt
-
-                ManualMove trgt ->
-                    Just trgt
+            Vector2.distance character.position target
     in
-    -- { character
-    --     | acceleration = Vector2.scale friction character.acceleration
-    --     , position =
-    --         character.position
-    --             |> Vector2.add (Vector2.scale (dt * character.movementSpeedModifier) character.velocity)
-    --             |> Vector2.add (Vector2.scale (dt * 0.1) character.acceleration)
-    -- }
-    --     |> constrainPosition
-    if targetDist > 1.5 then
-        case target of
-            Nothing ->
-                { character
-                    | velocity = Vector2.add character.velocity character.acceleration
-                    , position = Vector2.add character.position (Vector2.scale dt character.velocity)
-                }
-
-            Just t ->
-                { character
-                    | velocity = Vector2.direction character.position t |> Vector2.scale character.movementSpeedModifier
-                    , position = Vector2.add character.position (Vector2.scale dt character.velocity)
-                }
-
-    else
-        { character | velocity = Vector2.setMagnitude 0 character.velocity, state = Idle }
-
-
-constrainLeft : Character -> Character
-constrainLeft character =
-    if character.position.x < -50 + character.radius then
-        { character
-            | position = Vector2.setX (-50 + character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
-
-            -- , velocity = Vector2.negateX character.velocity
-            , velocity = Vector2.setX 0 character.velocity
-        }
+    if targetDist < 10 then
+        { character | velocity = Vector2.scale 0 character.velocity, state = Idle }
 
     else
         character
+            |> applyForce
+                (Vector2.direction character.position target
+                    |> Vector2.scale (targetDist * 0.001)
+                 -- |> Vector2.scale character.movementSpeedModifier
+                )
 
 
-constrainRight : Character -> Character
-constrainRight character =
-    if character.position.x > 50 - character.radius then
-        { character
-            | position = Vector2.setX (50 - character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
+{-| apply forces based on character target
+-}
+aiUpdate : Character -> Character
+aiUpdate character =
+    case character.state of
+        Idle ->
+            character
 
-            -- , velocity = Vector2.negateX character.velocity
-            , velocity = Vector2.setX 0 character.velocity
-        }
+        ManualMove t ->
+            aiForce t character
 
-    else
-        character
-
-
-constrainPosition : Character -> Character
-constrainPosition character =
-    -- TODO: handle a character being out of bounds in two dimensions at the same time
-    -- left
-    if character.position.x < -50 + character.radius then
-        { character
-            | position = Vector2.setX (-50 + character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
-
-            -- , velocity = Vector2.negateX character.velocity
-            , velocity = Vector2.setX 0 character.velocity
-        }
-        -- right
-
-    else if character.position.x > 50 - character.radius then
-        { character
-            | position = Vector2.setX (50 - character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateX
-
-            -- , velocity = Vector2.negateX character.velocity
-            , velocity = Vector2.setX 0 character.velocity
-        }
-        -- top
-
-    else if character.position.y < -50 + character.radius then
-        { character
-            | position = Vector2.setY (-50 + character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateY
-
-            -- , velocity = Vector2.negateY character.velocity
-            , velocity = Vector2.setY 0 character.velocity
-        }
-        -- bottom
-
-    else if character.position.y > 50 - character.radius then
-        { character
-            | position = Vector2.setY (50 - character.radius) character.position
-            , acceleration = character.acceleration |> Vector2.scale 0.5 |> Vector2.negateY
-
-            -- , velocity = Vector2.negateY character.velocity
-            , velocity = Vector2.setY 0 character.velocity
-        }
-
-    else
-        character
+        AiMove t ->
+            aiForce t character
 
 
-setMoveTarget : Character -> Character -> Character
-setMoveTarget target character =
-    { character | velocity = direction character.position target.position }
+{-| move character based on acceleration and velocity
+-}
+update : Float -> Character -> Character
+update dt character =
+    { character
+        | velocity = Vector2.add character.velocity character.acceleration |> Vector2.scale 0.98
+        , position = Vector2.add character.position (Vector2.scale dt character.velocity)
+        , acceleration = Vector2.setMagnitude 0 character.acceleration
+    }
+
+
+aiSetMoveTarget : Vector2 -> Character -> Character
+aiSetMoveTarget target character =
+    case character.state of
+        Idle ->
+            { character | velocity = direction character.position target, state = AiMove target }
+
+        ManualMove _ ->
+            character
+
+        AiMove _ ->
+            { character | velocity = direction character.position target, state = AiMove target }
 
 
 setMoveTargetVector : Vector2 -> Character -> Character
 setMoveTargetVector target character =
-    { character | velocity = direction character.position target, state = ManualMove target }
+    { character | state = ManualMove target }
 
 
 applyForce : Vector2 -> Character -> Character
 applyForce force character =
-    { character | acceleration = Vector2.add character.acceleration (Vector2.scale (1 / character.radius) force) }
+    { character | acceleration = Vector2.add character.acceleration force }
 
 
 closestEnemy : Character -> List Character -> Maybe Character
@@ -204,42 +128,49 @@ closestEnemy char characters =
         |> List.foldl closestAcc Nothing
 
 
-moveTowardsClosestEnemy : List Character -> Character -> Character
-moveTowardsClosestEnemy characters char =
-    case closestEnemy char characters of
-        Just target ->
-            setMoveTarget target char
-
-        Nothing ->
-            { char | velocity = new 0 0 }
-
-
-keepEnemyDistance : Float -> List Character -> Character -> Character
+keepEnemyDistance : Float -> List Character -> Character -> Maybe Vector2
 keepEnemyDistance safeDistance characters char =
-    case closestEnemy char characters of
-        Just target ->
-            let
-                dist =
-                    Vector2.distance char.position target.position
-            in
-            if dist < safeDistance then
-                -- Enemy is too close, move away
-                { char | velocity = direction char.position target.position |> Vector2.scale (1 - (dist / safeDistance)) |> Vector2.negate }
+    closestEnemy char characters
+        |> Maybe.andThen
+            (\target ->
+                let
+                    dist =
+                        Vector2.distance char.position target.position
+                in
+                if dist < safeDistance then
+                    Just (Vector2.direction target.position char.position |> Vector2.setMagnitude 100)
 
-            else
-                { char | velocity = new 0 0 }
-
-        Nothing ->
-            { char | velocity = new 0 0 }
+                else
+                    Nothing
+            )
 
 
+{-| Set movement target for a character
+-}
 aiMove : List Character -> Character -> Character
 aiMove characters char =
-    if char.aggressive then
-        moveTowardsClosestEnemy characters char
+    case char.state of
+        ManualMove _ ->
+            char
 
-    else
-        keepEnemyDistance 25 characters char
+        _ ->
+            if char.aggressive then
+                case closestEnemy char characters of
+                    Just t ->
+                        { char | state = AiMove t.position }
+
+                    Nothing ->
+                        char
+                -- moveTowardsClosestEnemy characters char
+
+            else
+                -- keepEnemyDistance 500 characters char
+                case keepEnemyDistance 100 characters char of
+                    Just t ->
+                        { char | state = AiMove t }
+
+                    Nothing ->
+                        { char | state = Idle }
 
 
 isColliding : Character -> Character -> Bool
@@ -251,28 +182,19 @@ collision : List Character -> Character -> Character
 collision chars char =
     List.foldl
         (\c1 c2 ->
-            if c1 /= c2 then
-                -- only check collision betweeen enemies, ignore self
-                if isColliding c1 c2 then
-                    let
-                        d =
-                            Vector2.distance c1.position c2.position - (c1.radius + c2.radius)
+            if c1 /= c2 && isColliding c1 c2 then
+                -- ignore self
+                let
+                    d =
+                        Vector2.distance c1.position c2.position - (c1.radius + c2.radius)
 
-                        shift =
-                            Vector2.subtract c2.position c1.position
-                                |> Vector2.scale 0.01
-                                |> Vector2.scale (d * -1)
-                    in
-                    -- resolve collision
-                    { c2
-                        | position = Vector2.add c2.position shift
-
-                        -- , radius = c2.radius - 0.05
-                    }
-                    -- |> applyForce (Vector2.scale (c1.radius * 0.7) shift)
-
-                else
-                    c2
+                    shift =
+                        Vector2.subtract c2.position c1.position
+                            |> Vector2.scale 0.001
+                            |> Vector2.scale (d * -1)
+                in
+                c2
+                    |> applyForce shift
 
             else
                 c2

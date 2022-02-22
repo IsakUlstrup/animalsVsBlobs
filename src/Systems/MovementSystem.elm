@@ -1,9 +1,19 @@
 module Systems.MovementSystem exposing (..)
 
 import Component
-import Components.Character
+import Components.Character exposing (Character, CharacterState(..))
+import Components.Vector2 exposing (Vector2)
 import Ecs
 import GameData exposing (GameMsg(..), GameScene)
+
+
+setMoveTarget : Vector2 -> Character -> Character
+setMoveTarget target character =
+    if character.player then
+        Components.Character.setMoveTargetVector target character
+
+    else
+        character
 
 
 movementSystem : GameMsg -> GameScene -> GameScene
@@ -20,7 +30,7 @@ movementSystem msg scene =
 
         MoveTo target ->
             scene
-                |> Ecs.updateComponents (Component.updateCharacter (Components.Character.setMoveTargetVector target))
+                |> Ecs.updateComponents (Component.updateCharacter (setMoveTarget target))
 
         _ ->
             scene

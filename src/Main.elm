@@ -3,11 +3,10 @@ module Main exposing (..)
 import Browser
 import Browser.Dom exposing (Element, Error)
 import Browser.Events
-import Component exposing (Component, getCharacter, getPhysics)
+import Component exposing (Component, getCharacter)
 import Components.Character exposing (CharacterState(..))
-import Components.Physics
 import Components.Vector2
-import Content.Characters exposing (dog, mouse, panda)
+import Content.Characters exposing (blob, dog, mouse, panda)
 import Ecs
 import GameData exposing (GameScene)
 import Html exposing (Html, button, div, h3, input, p)
@@ -17,6 +16,7 @@ import Json.Decode as Decode
 import Svg exposing (Attribute, Svg, g, svg, text, text_)
 import Svg.Attributes exposing (class, id, viewBox)
 import Svg.Events
+import Systems.AISystem exposing (aiSystem)
 import Systems.MovementSystem exposing (movementSystem)
 import Task
 
@@ -40,9 +40,12 @@ type alias Model =
 initScene : GameScene
 initScene =
     Ecs.emptyScene 10
-        |> Ecs.addEntity [ mouse ( 0, 0 ) ]
-        |> Ecs.addEntity [ panda ( -10, 20 ) ]
-        |> Ecs.addEntity [ dog ( -10, 10 ) ]
+        |> Ecs.addEntity (mouse ( 0, 0 ))
+        |> Ecs.addEntity (panda ( -10, 20 ))
+        |> Ecs.addEntity (dog ( -10, 10 ))
+        |> Ecs.addEntity (blob ( -100, 100 ))
+        |> Ecs.addEntity (blob ( -110, 100 ))
+        |> Ecs.addSystem aiSystem
         |> Ecs.addSystem movementSystem
 
 
@@ -129,7 +132,11 @@ update msg model =
             ( model, Cmd.none )
 
         GotElement (Ok element) ->
-            ( { model | viewPort = { x = element.element.width, y = element.element.height } }, Cmd.none )
+            if element.element.width /= model.viewPort.x || element.element.height /= model.viewPort.y then
+                ( { model | viewPort = { x = element.element.width, y = element.element.height } }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
 
 
 
@@ -144,7 +151,7 @@ viewCharacter debug character =
                 "yellow"
 
             else
-                "magenta"
+                "rgba(240, 0, 200, 0.6)"
 
         textLabel c =
             case c.appearance of
@@ -180,6 +187,29 @@ viewCharacter debug character =
                             []
                         ]
 
+                    AiMove trgt ->
+                        [ Svg.line
+                            [ Svg.Attributes.x2 "0"
+                            , Svg.Attributes.y2 "0"
+                            , Svg.Attributes.x1 (String.fromFloat (trgt.x - c.position.x))
+                            , Svg.Attributes.y1 (String.fromFloat (trgt.y - c.position.y))
+                            , Svg.Attributes.stroke "rgba(0, 0, 0, 0.5)"
+                            , Svg.Attributes.strokeWidth "5"
+                            , Svg.Attributes.strokeLinecap "round"
+                            , Svg.Attributes.strokeDasharray "0.35, 20"
+                            ]
+                            []
+                        , Svg.circle
+                            [ Svg.Attributes.cx (String.fromFloat (trgt.x - c.position.x))
+                            , Svg.Attributes.cy (String.fromFloat (trgt.y - c.position.y))
+                            , Svg.Attributes.r "0.4"
+                            , Svg.Attributes.stroke "black"
+                            , Svg.Attributes.strokeWidth "1"
+                            , Svg.Attributes.fill "none"
+                            ]
+                            []
+                        ]
+
                     _ ->
                         []
 
@@ -196,7 +226,7 @@ viewCharacter debug character =
                         [ Svg.Attributes.class "player" ]
                      )
                         ++ [ Svg.Attributes.y "15"
-                           , Svg.Attributes.fontSize "3rem"
+                           , Svg.Attributes.fontSize "2.5rem"
                            , Svg.Attributes.textAnchor "middle"
                            ]
                     )
@@ -204,14 +234,21 @@ viewCharacter debug character =
 
             else
                 Svg.circle
-                    [ Svg.Attributes.cx "0"
-                    , Svg.Attributes.cy "0"
-                    , Svg.Attributes.r "1"
-                    , Svg.Attributes.fill (fillColor character)
+                    ((if c.state /= Idle then
+                        [ Svg.Attributes.class "blob-walk", Svg.Attributes.class "blob" ]
 
-                    -- , Svg.Attributes.fill "url(#blob-gradient)"
-                    , Svg.Attributes.class "blob"
-                    ]
+                      else
+                        [ Svg.Attributes.class "blob" ]
+                     )
+                        ++ [ Svg.Attributes.cx "0"
+                           , Svg.Attributes.cy "0"
+                           , Svg.Attributes.r "20"
+                           , Svg.Attributes.fill (fillColor character)
+
+                           -- , Svg.Attributes.fill "url(#blob-gradient)"
+                           -- , Svg.Attributes.class "blob"
+                           ]
+                    )
                     []
 
         viewVectors c =

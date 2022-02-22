@@ -16,6 +16,7 @@ aiSystem msg scene =
             in
             scene
                 |> Ecs.updateComponents (Component.updateCharacter (Components.Character.aiMove characters))
+                |> Ecs.updateComponents (Component.updateCharacter Components.Character.aiUpdate)
 
         _ ->
             scene

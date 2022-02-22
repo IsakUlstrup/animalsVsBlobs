@@ -87,13 +87,16 @@
   height: 100%;
 }
 
-.blob {
-  animation: blob-walk 0.5s infinite;
-}
+/* .blob {
+} */
 
 .walk-animation {
   animation: player-walk 0.4s infinite;
   transform-origin: 0 2px;
+}
+
+.blob-walk {
+  animation: blob-walk 0.5s infinite;
 }
 
 .player {
