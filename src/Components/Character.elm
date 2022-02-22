@@ -43,7 +43,7 @@ aiForce target character =
         targetDist =
             Vector2.distance character.position target
     in
-    if targetDist < 20 then
+    if targetDist < (character.radius * 1.5) then
         { character | state = Idle }
 
     else
@@ -51,6 +51,7 @@ aiForce target character =
             |> applyForce
                 (Vector2.direction character.position target
                     |> Vector2.scale (targetDist * 0.001)
+                    |> Vector2.scale character.movementSpeedModifier
                 )
 
 
@@ -75,8 +76,8 @@ update : Float -> Character -> Character
 update dt character =
     { character
         | velocity =
-            Vector2.add character.velocity character.acceleration
-                |> Vector2.limitMagnitude character.movementSpeedModifier
+            Vector2.add character.velocity (Vector2.scale dt character.acceleration)
+                -- |> Vector2.limitMagnitude character.movementSpeedModifier
                 |> Vector2.scale 0.97
         , position = Vector2.add character.position (Vector2.scale dt character.velocity)
         , acceleration = Vector2.setMagnitude 0 character.acceleration
