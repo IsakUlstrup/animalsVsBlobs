@@ -4,6 +4,7 @@ module Ecs exposing
     , Scene
     , System
     , addComponents
+    , addEntities
     , addEntity
     , addSystem
     , emptyScene
@@ -13,6 +14,7 @@ module Ecs exposing
     , mapComponentGroups
     , mapComponents
     , runSystems
+    , updateAddComponents
     , updateComponent
     , updateComponents
     )
@@ -131,6 +133,16 @@ addEntity components (Scene scene) =
         |> addComponents entity components
 
 
+addEntities : List (List compData) -> Scene compData msg -> Scene compData msg
+addEntities entities scene =
+    case entities of
+        [] ->
+            scene
+
+        e :: es ->
+            addEntity e (addEntities es scene)
+
+
 
 ---- COMPONENT ----
 
@@ -184,6 +196,33 @@ updateComponents f (Scene scene) =
             Component { c | data = func c.data }
     in
     Scene { scene | components = List.map (updateCompData f) scene.components }
+
+
+{-| update all components, add eny returned component lists as new entities
+-}
+updateAddComponents : (compData -> ( compData, List (List compData) )) -> Scene compData msg -> Scene compData msg
+updateAddComponents f (Scene scene) =
+    let
+        updateCompData : (compData -> ( compData, List (List compData) )) -> Component compData -> ( Component compData, List (List compData) )
+        updateCompData func (Component c) =
+            let
+                ( cData, e ) =
+                    func c.data
+            in
+            ( Component { c | data = cData }, e )
+
+        compEnts =
+            List.map (updateCompData f) scene.components
+
+        comps =
+            List.map Tuple.first compEnts
+
+        entities =
+            List.concatMap Tuple.second compEnts
+    in
+    Scene
+        { scene | components = comps }
+        |> addEntities entities
 
 
 {-| Keep components that satisfy the test.
