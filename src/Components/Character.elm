@@ -9,6 +9,11 @@ type CharacterState
     | ManualMove Vector2
 
 
+type alias Skill =
+    { cooldown : Float
+    }
+
+
 type alias Character =
     { position : Vector2
     , velocity : Vector2
@@ -19,17 +24,23 @@ type alias Character =
     , appearance : Maybe String
     , aggressive : Bool
     , state : CharacterState
+    , skill : Skill
     }
+
+
+testSkill : Skill
+testSkill =
+    Skill 1000
 
 
 newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
 newCharacter ( x, y ) player size speed app =
-    Character (new x y) (new 0 0) (new 0 0) player size speed app True Idle
+    Character (new x y) (new 0 0) (new 0 0) player size speed app True Idle testSkill
 
 
 newPassiveCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
 newPassiveCharacter ( x, y ) player size speed app =
-    Character (new x y) (new 0 0) (new 0 0) player size speed app False Idle
+    Character (new x y) (new 0 0) (new 0 0) player size speed app False Idle testSkill
 
 
 distanceBetween : Character -> Character -> Float

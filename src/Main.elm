@@ -49,6 +49,10 @@ initScene =
         |> Ecs.addSystem movementSystem
 
 
+
+-- |> Ecs.addSystem skillSystem
+
+
 init : ( Model, Cmd Msg )
 init =
     ( Model
