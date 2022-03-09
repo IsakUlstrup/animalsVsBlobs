@@ -22,9 +22,12 @@ type alias Character =
     , radius : Float
     , movementSpeedModifier : Float
     , appearance : Maybe String
-    , aggressive : Bool
+
+    -- , aggressive : Bool
     , state : CharacterState
     , skill : Skill
+    , preferredDistance : Float
+    , preferredMaxDistance : Float
     }
 
 
@@ -33,14 +36,47 @@ testSkill =
     Skill 1000
 
 
-newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
-newCharacter ( x, y ) player size speed app =
-    Character (new x y) (new 0 0) (new 0 0) player size speed app True Idle testSkill
+
+---- CHARACTER BUILDER ----
 
 
-newPassiveCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
-newPassiveCharacter ( x, y ) player size speed app =
-    Character (new x y) (new 0 0) (new 0 0) player size speed app False Idle testSkill
+init : ( Float, Float ) -> Character
+init ( x, y ) =
+    Character (new x y) (new 0 0) (new 0 0) False 15 1 Nothing Idle testSkill 100 500
+
+
+{-| Set wether character is a player or not
+-}
+withPlayerFlag : Bool -> Character -> Character
+withPlayerFlag flag char =
+    { char | player = flag }
+
+
+withPreferredDistance : Float -> Character -> Character
+withPreferredDistance dist char =
+    { char | preferredDistance = dist }
+
+
+withPreferredMaxDistance : Float -> Character -> Character
+withPreferredMaxDistance dist char =
+    { char | preferredMaxDistance = dist }
+
+
+withMoveSpeed : Float -> Character -> Character
+withMoveSpeed speed char =
+    { char | movementSpeedModifier = speed }
+
+
+withAppearance : Maybe String -> Character -> Character
+withAppearance app char =
+    { char | appearance = app }
+
+
+
+-- newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
+-- newCharacter ( x, y ) player size speed app =
+--     Character (new x y) (new 0 0) (new 0 0) player size speed app Idle testSkill 100 200
+---- MAIN LOGIC ----
 
 
 distanceBetween : Character -> Character -> Float
@@ -141,7 +177,7 @@ closestEnemy char characters =
 
 
 keepEnemyDistance : Float -> List Character -> Character -> Maybe Vector2
-keepEnemyDistance safeDistance characters char =
+keepEnemyDistance _ characters char =
     closestEnemy char characters
         |> Maybe.andThen
             (\target ->
@@ -149,8 +185,12 @@ keepEnemyDistance safeDistance characters char =
                     dist =
                         Vector2.distance char.position target.position
                 in
-                if dist < safeDistance then
+                -- target is too close, move away
+                if dist < char.preferredDistance && dist < char.preferredMaxDistance then
                     Just (Vector2.add char.position (Vector2.direction target.position char.position |> Vector2.setMagnitude 50))
+
+                else if dist > char.preferredDistance && dist > char.preferredMaxDistance then
+                    Just (Vector2.add char.position (Vector2.direction char.position target.position |> Vector2.setMagnitude 50))
 
                 else
                     Nothing
@@ -166,23 +206,21 @@ aiMove characters char =
             char
 
         _ ->
-            if char.aggressive then
-                case closestEnemy char characters of
-                    Just t ->
-                        { char | state = AiMove t.position }
+            -- if char.aggressive then
+            --     case closestEnemy char characters of
+            --         Just t ->
+            --             { char | state = AiMove t.position }
+            --         Nothing ->
+            --             char
+            --     -- moveTowardsClosestEnemy characters char
+            -- else
+            -- keepEnemyDistance 500 characters char
+            case keepEnemyDistance 200 characters char of
+                Just t ->
+                    { char | state = AiMove t }
 
-                    Nothing ->
-                        char
-                -- moveTowardsClosestEnemy characters char
-
-            else
-                -- keepEnemyDistance 500 characters char
-                case keepEnemyDistance 200 characters char of
-                    Just t ->
-                        { char | state = AiMove t }
-
-                    Nothing ->
-                        { char | state = Idle }
+                Nothing ->
+                    { char | state = Idle }
 
 
 setIdle : Character -> Character

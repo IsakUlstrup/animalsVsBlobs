@@ -287,6 +287,24 @@ viewCharacter debug character =
                         , Svg.Attributes.fill "none"
                         ]
                         []
+                    , Svg.circle
+                        [ Svg.Attributes.cx "0"
+                        , Svg.Attributes.cy "0"
+                        , Svg.Attributes.r (String.fromFloat c.preferredDistance)
+                        , Svg.Attributes.stroke "cyan"
+                        , Svg.Attributes.strokeWidth "1"
+                        , Svg.Attributes.fill "none"
+                        ]
+                        []
+                    , Svg.circle
+                        [ Svg.Attributes.cx "0"
+                        , Svg.Attributes.cy "0"
+                        , Svg.Attributes.r (String.fromFloat c.preferredMaxDistance)
+                        , Svg.Attributes.stroke "magenta"
+                        , Svg.Attributes.strokeWidth "1"
+                        , Svg.Attributes.fill "none"
+                        ]
+                        []
                     , Svg.line
                         [ Svg.Attributes.x1 "0"
                         , Svg.Attributes.y1 "0"
