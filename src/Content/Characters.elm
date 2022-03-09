@@ -12,7 +12,7 @@ panda ( x, y ) =
             |> Components.Character.withPlayerFlag True
             |> Components.Character.withAppearance (Just "🐼")
             |> Components.Character.withPreferredDistance 200
-            |> Components.Character.withPreferredMaxDistance 500
+            |> Components.Character.withVisionRange 500
         )
     ]
 
@@ -25,7 +25,7 @@ dog ( x, y ) =
             |> Components.Character.withPlayerFlag True
             |> Components.Character.withAppearance (Just "🐶")
             |> Components.Character.withPreferredDistance 200
-            |> Components.Character.withPreferredMaxDistance 500
+            |> Components.Character.withVisionRange 500
         )
     ]
 
@@ -38,7 +38,7 @@ mouse ( x, y ) =
             |> Components.Character.withPlayerFlag True
             |> Components.Character.withAppearance (Just "🐭")
             |> Components.Character.withPreferredDistance 200
-            |> Components.Character.withPreferredMaxDistance 500
+            |> Components.Character.withVisionRange 500
         )
     ]
 
@@ -57,7 +57,7 @@ blob ( x, y ) =
     [ Component.characterComponent
         (Components.Character.init ( x, y )
             |> Components.Character.withPreferredDistance 0
-            |> Components.Character.withPreferredMaxDistance 100
+            |> Components.Character.withVisionRange 9999
             |> Components.Character.withMoveSpeed 0.2
         )
     ]

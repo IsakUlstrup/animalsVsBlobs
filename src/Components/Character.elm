@@ -27,7 +27,7 @@ type alias Character =
     , state : CharacterState
     , skill : Skill
     , preferredDistance : Float
-    , preferredMaxDistance : Float
+    , visionRange : Float
     }
 
 
@@ -57,9 +57,9 @@ withPreferredDistance dist char =
     { char | preferredDistance = dist }
 
 
-withPreferredMaxDistance : Float -> Character -> Character
-withPreferredMaxDistance dist char =
-    { char | preferredMaxDistance = dist }
+withVisionRange : Float -> Character -> Character
+withVisionRange dist char =
+    { char | visionRange = dist }
 
 
 withMoveSpeed : Float -> Character -> Character
@@ -73,15 +73,7 @@ withAppearance app char =
 
 
 
--- newCharacter : ( Float, Float ) -> Bool -> Float -> Float -> Maybe String -> Character
--- newCharacter ( x, y ) player size speed app =
---     Character (new x y) (new 0 0) (new 0 0) player size speed app Idle testSkill 100 200
 ---- MAIN LOGIC ----
-
-
-distanceBetween : Character -> Character -> Float
-distanceBetween c1 c2 =
-    Vector2.distance c1.position c2.position
 
 
 aiForce : Vector2 -> Character -> Character
@@ -163,7 +155,7 @@ closestEnemy char characters =
         closestAcc c closest =
             case closest of
                 Just cls ->
-                    if distanceBetween char c < distanceBetween char cls then
+                    if Vector2.distance char.position c.position < Vector2.distance char.position cls.position then
                         Just c
 
                     else
@@ -176,8 +168,8 @@ closestEnemy char characters =
         |> List.foldl closestAcc Nothing
 
 
-keepEnemyDistance : Float -> List Character -> Character -> Maybe Vector2
-keepEnemyDistance _ characters char =
+keepDistance : List Character -> Character -> Maybe Vector2
+keepDistance characters char =
     closestEnemy char characters
         |> Maybe.andThen
             (\target ->
@@ -186,11 +178,12 @@ keepEnemyDistance _ characters char =
                         Vector2.distance char.position target.position
                 in
                 -- target is too close, move away
-                if dist < char.preferredDistance && dist < char.preferredMaxDistance then
-                    Just (Vector2.add char.position (Vector2.direction target.position char.position |> Vector2.setMagnitude 50))
+                if dist < char.preferredDistance && isIdle char then
+                    Just (Vector2.add char.position (Vector2.direction target.position char.position |> Vector2.setMagnitude 100))
+                    -- target is too far, move closer
 
-                else if dist > char.preferredDistance && dist > char.preferredMaxDistance then
-                    Just (Vector2.add char.position (Vector2.direction char.position target.position |> Vector2.setMagnitude 50))
+                else if dist > char.preferredDistance && dist < char.visionRange && isIdle char then
+                    Just (Vector2.add char.position (Vector2.direction char.position target.position |> Vector2.setMagnitude 100))
 
                 else
                     Nothing
@@ -206,16 +199,7 @@ aiMove characters char =
             char
 
         _ ->
-            -- if char.aggressive then
-            --     case closestEnemy char characters of
-            --         Just t ->
-            --             { char | state = AiMove t.position }
-            --         Nothing ->
-            --             char
-            --     -- moveTowardsClosestEnemy characters char
-            -- else
-            -- keepEnemyDistance 500 characters char
-            case keepEnemyDistance 200 characters char of
+            case keepDistance characters char of
                 Just t ->
                     { char | state = AiMove t }
 
@@ -230,7 +214,17 @@ setIdle character =
 
 isColliding : Character -> Character -> Bool
 isColliding c1 c2 =
-    distanceBetween c1 c2 < c1.radius + c2.radius
+    Vector2.distance c1.position c2.position < c1.radius + c2.radius
+
+
+isIdle : Character -> Bool
+isIdle char =
+    case char.state of
+        Idle ->
+            True
+
+        _ ->
+            False
 
 
 collision : List Character -> Character -> Character
@@ -256,8 +250,3 @@ collision chars char =
         )
         char
         chars
-
-
-isAlive : Character -> Bool
-isAlive character =
-    character.radius >= 1

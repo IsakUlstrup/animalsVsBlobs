@@ -11,7 +11,7 @@ deathSystem msg scene =
     case msg of
         GameTick _ ->
             scene
-                |> Ecs.filterComponents (Component.characterPred Components.Character.isAlive)
 
+        -- |> Ecs.filterComponents (Component.characterPred Components.Character.isAlive)
         _ ->
             scene

@@ -299,7 +299,7 @@ viewCharacter debug character =
                     , Svg.circle
                         [ Svg.Attributes.cx "0"
                         , Svg.Attributes.cy "0"
-                        , Svg.Attributes.r (String.fromFloat c.preferredMaxDistance)
+                        , Svg.Attributes.r (String.fromFloat c.visionRange)
                         , Svg.Attributes.stroke "magenta"
                         , Svg.Attributes.strokeWidth "1"
                         , Svg.Attributes.fill "none"
