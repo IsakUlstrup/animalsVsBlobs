@@ -2,6 +2,7 @@ module Content.Characters exposing (..)
 
 import Component exposing (Component)
 import Components.Character
+import Components.Range
 
 
 panda : ( Float, Float ) -> List Component
@@ -13,6 +14,7 @@ panda ( x, y ) =
             |> Components.Character.withAppearance (Just "🐼")
             |> Components.Character.withPreferredDistance 200
             |> Components.Character.withVisionRange 500
+            |> Components.Character.withSkill (Just Components.Character.testSkill)
         )
     ]
 
@@ -43,13 +45,20 @@ mouse ( x, y ) =
     ]
 
 
-
--- elephant : ( Float, Float ) -> Character
--- elephant ( x, y ) =
---     Components.Character.newCharacter ( x, y ) True 6 0.005 (Just "🐘")
--- fox : ( Float, Float ) -> Character
--- fox ( x, y ) =
---     Components.Character.newPassiveCharacter ( x, y ) True 4 0.06 (Just "🦊")
+rocket : ( Float, Float ) -> List Component
+rocket ( x, y ) =
+    -- [ Component.characterComponent (Components.Character.newCharacter ( x, y ) True 15 1.5 (Just "🐭")) ]
+    [ Component.characterComponent
+        (Components.Character.init ( x, y )
+            |> Components.Character.withPlayerFlag True
+            |> Components.Character.withAppearance (Just "🚀")
+            |> Components.Character.withPreferredDistance 0
+            |> Components.Character.withVisionRange 500
+            |> Components.Character.withDamage 500
+            |> Components.Character.withMoveSpeed 2
+            |> Components.Character.withHealth (Components.Range.newRange 0 1 1)
+        )
+    ]
 
 
 blob : ( Float, Float ) -> List Component

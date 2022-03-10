@@ -1,5 +1,6 @@
 module Components.Character exposing (..)
 
+import Components.Range exposing (Range, newRange)
 import Components.Vector2 as Vector2 exposing (Vector2, direction, new)
 
 
@@ -25,15 +26,12 @@ type alias Character =
 
     -- , aggressive : Bool
     , state : CharacterState
-    , skill : Skill
+    , skill : Maybe Skill
     , preferredDistance : Float
     , visionRange : Float
+    , damage : Float
+    , health : Range Float
     }
-
-
-testSkill : Skill
-testSkill =
-    Skill 1000
 
 
 
@@ -42,7 +40,7 @@ testSkill =
 
 init : ( Float, Float ) -> Character
 init ( x, y ) =
-    Character (new x y) (new 0 0) (new 0 0) False 15 1 Nothing Idle testSkill 100 500
+    Character (new x y) (new 0 0) (new 0 0) False 15 1 Nothing Idle Nothing 100 500 1 (newRange 0 100 100)
 
 
 {-| Set wether character is a player or not
@@ -70,6 +68,65 @@ withMoveSpeed speed char =
 withAppearance : Maybe String -> Character -> Character
 withAppearance app char =
     { char | appearance = app }
+
+
+withHealth : Range Float -> Character -> Character
+withHealth health char =
+    { char | health = health }
+
+
+withSkill : Maybe Skill -> Character -> Character
+withSkill skill char =
+    { char | skill = skill }
+
+
+withDamage : Float -> Character -> Character
+withDamage dmg char =
+    { char | damage = dmg }
+
+
+
+---- SKILL ----
+
+
+testSkill : Skill
+testSkill =
+    Skill 100
+
+
+updateSkill : Float -> Skill -> Skill
+updateSkill dt skill =
+    { skill | cooldown = skill.cooldown - dt }
+
+
+useSkill : Character -> Character
+useSkill char =
+    case char.skill of
+        Nothing ->
+            char
+
+        Just _ ->
+            { char | skill = Just testSkill }
+
+
+skillIsReady : Character -> Bool
+skillIsReady char =
+    case char.skill of
+        Just s ->
+            s.cooldown <= 0
+
+        Nothing ->
+            False
+
+
+updateCharacterSkill : Float -> Character -> Character
+updateCharacterSkill dt char =
+    case char.skill of
+        Nothing ->
+            char
+
+        Just s ->
+            { char | skill = Just (updateSkill dt s) }
 
 
 
@@ -217,6 +274,11 @@ isColliding c1 c2 =
     Vector2.distance c1.position c2.position < c1.radius + c2.radius
 
 
+areEnemies : Character -> Character -> Bool
+areEnemies c1 c2 =
+    c1.player /= c2.player
+
+
 isIdle : Character -> Bool
 isIdle char =
     case char.state of
@@ -225,6 +287,21 @@ isIdle char =
 
         _ ->
             False
+
+
+isAlive : Character -> Bool
+isAlive char =
+    Components.Range.isEmpty char.health |> not
+
+
+isWithinVision : Character -> Character -> Bool
+isWithinVision char target =
+    Vector2.distance char.position target.position <= char.visionRange && areEnemies char target
+
+
+takeDamage : Float -> Character -> Character
+takeDamage dmg char =
+    { char | health = Components.Range.subtract dmg char.health }
 
 
 collision : List Character -> Character -> Character
@@ -242,8 +319,14 @@ collision chars char =
                             |> Vector2.scale 0.01
                             |> Vector2.scale (d * -1)
                 in
-                c2
-                    |> applyForce shift
+                if areEnemies c1 c2 then
+                    c2
+                        |> applyForce shift
+                        |> takeDamage c1.damage
+
+                else
+                    c2
+                        |> applyForce shift
 
             else
                 c2

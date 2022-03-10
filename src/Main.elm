@@ -17,7 +17,9 @@ import Svg exposing (Attribute, Svg, g, svg, text, text_)
 import Svg.Attributes exposing (class, id, viewBox)
 import Svg.Events
 import Systems.AISystem exposing (aiSystem)
+import Systems.DeathSystem exposing (deathSystem)
 import Systems.MovementSystem exposing (movementSystem)
+import Systems.SkillSystem exposing (skillSystem)
 import Task
 
 
@@ -47,6 +49,8 @@ initScene =
         |> Ecs.addEntity (blob ( -110, 100 ))
         |> Ecs.addSystem aiSystem
         |> Ecs.addSystem movementSystem
+        |> Ecs.addSystem skillSystem
+        |> Ecs.addSystem deathSystem
 
 
 
